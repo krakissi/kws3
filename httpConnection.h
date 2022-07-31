@@ -10,7 +10,9 @@
 #include <sstream>
 #include <unordered_map>
 
-class HttpConnection {
+#include "connection.h"
+
+class HttpConnection : public Connection {
 	bool m_valid;
 
 	enum RequestMethod {
@@ -19,10 +21,21 @@ class HttpConnection {
 		HTTP_METHOD_POST,
 	} m_method;
 
+	int m_emptycounter;
+	size_t m_headersize;
+
 	std::string m_uri, m_version;
 	std::unordered_map<std::string, std::string> m_headers;
 
 	std::string m_body;
+
+
+	// Returns the size in bytes of the received HTTP header, if one could be
+	// parsed from the buf. Otherwise returns 0.
+	size_t sizeofHeaders();
+
+	// Read headers from a string buffer.
+	void parseHeaders();
 
 
 	static struct DebugStats {
@@ -32,6 +45,7 @@ class HttpConnection {
 			m_invalidRequest,
 			m_invalidRequestBadFirstLine,
 			m_invalidRequestMethodNotImpl,
+			m_invalidRequestIncomplete,
 
 			m_numMethodGet,
 			m_numMethodPost,
@@ -43,17 +57,21 @@ class HttpConnection {
 public:
 	HttpConnection() :
 		m_valid(false),
+		m_headersize(0),
 		m_method(HTTP_METHOD_UNSET)
 	{}
 
+	// from Connection
+	int readFailure(int code) override;
+	int readSuccess(ssize_t rc, const char *buf) override;
+
 	inline bool valid() const { return m_valid; }
 
-	// Read headers from a string buffer.
-	void parseHeaders(const std::string& buf);
+	// Read from the socket and look for an incoming HTTP request.
+	void receiveRequest();
 
-	// Returns the size in bytes of the received HTTP header, if one could be
-	// parsed from the buf. Otherwise returns 0.
-	static size_t SizeofHeader(const std::string& buf);
+	// Respond to incoming request with exactly what we have received so far.
+	void echoRequest();
 
 	// Write debug stat data to the provided stream.
 	static void DumpDebugStats(std::stringstream &ss);

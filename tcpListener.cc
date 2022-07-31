@@ -41,9 +41,9 @@ bool TcpListener::init(){
 	return true;
 }
 
-int TcpListener::accept(struct sockaddr_in &addr_client) const {
-	socklen_t client_length = sizeof(addr_client);
-	int fd = accept4(m_fd, (struct sockaddr*) &addr_client, &client_length, (SOCK_NONBLOCK | SOCK_CLOEXEC));
+int TcpListener::accept(Connection &conn) const {
+	struct sockaddr_in *addr_client = &(conn.addr_client());
+	socklen_t client_length = sizeof(struct sockaddr_in);
 
-	return fd;
+	return conn.fd(accept4(m_fd, (struct sockaddr*) addr_client, &client_length, (SOCK_NONBLOCK | SOCK_CLOEXEC)));
 }

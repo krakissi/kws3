@@ -6,13 +6,9 @@
 #ifndef KWS3_TCP_LISTENER_H
 #define KWS3_TCP_LISTENER_H
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
+#include "connection.h"
 
-
-class TcpListener {
-	int m_fd;
+class TcpListener : public Connection {
 	struct sockaddr_in m_addr;
 
 	int m_error;
@@ -22,7 +18,6 @@ class TcpListener {
 
 public:
 	TcpListener(int port) :
-		m_fd(-1),
 		m_addr({
 			.sin_family = AF_INET,
 			.sin_port = htons(port),
@@ -42,7 +37,7 @@ public:
 	inline bool valid() const { return (m_error == 0); }
 
 	// Blocks until a new connection opens, returns file descriptor.
-	int accept(struct sockaddr_in &addr_client) const;
+	int accept(Connection &conn) const;
 };
 
 #endif
