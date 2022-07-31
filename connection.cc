@@ -23,6 +23,6 @@ ssize_t Connection::tryRead(){
 	return (rc < 0) ? readFailure(errno) : readSuccess(rc, buf);
 }
 
-ssize_t Connection::tryWrite(const string &msg){
+ssize_t Connection::tryWrite(const string &msg) const {
 	return write(m_fd, msg.c_str(), msg.size());
 }

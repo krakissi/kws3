@@ -17,7 +17,7 @@ int main(int argc, char **argv){
 
 		// Wait for a connection.
 		if(listener.accept(conn) < 0)
-			return 2;
+			continue;
 
 		// Read from socket, look for incoming HTTP request.
 		conn.receiveRequest();

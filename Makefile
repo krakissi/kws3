@@ -12,22 +12,31 @@ clean:
 ${OUTDIR}:
 	mkdir -p "${OUTDIR}"
 
-${OUTDIR}/util.o: util.h util.cc
+${OUTDIR}/util.o:                      \
+		util.h                         \
+		util.cc
 	g++ -o ${OUTDIR}/util.o -c util.cc
 
-${OUTDIR}/connection.o: connection.h connection.cc
+${OUTDIR}/connection.o:                \
+		connection.h                   \
+		connection.cc
 	g++ -o ${OUTDIR}/connection.o -c connection.cc
 
-${OUTDIR}/tcpListener.o: tcpListener.h tcpListener.cc
+${OUTDIR}/tcpListener.o:               \
+		tcpListener.h                  \
+		tcpListener.cc                 \
+		${OUTDIR}/connection.o
 	g++ -o ${OUTDIR}/tcpListener.o -c tcpListener.cc
 
-${OUTDIR}/httpConnection.o: httpConnection.h httpConnection.cc
+${OUTDIR}/httpConnection.o:            \
+		httpConnection.h               \
+		httpConnection.cc              \
+		${OUTDIR}/util.o               \
+		${OUTDIR}/connection.o
 	g++ -o ${OUTDIR}/httpConnection.o -c httpConnection.cc
 
 ${KWS3}: ${OUTDIR}                     \
 		main.cc                        \
-		${OUTDIR}/util.o               \
-		${OUTDIR}/connection.o         \
 		${OUTDIR}/tcpListener.o        \
 		${OUTDIR}/httpConnection.o
 	g++ -o "${KWS3}" -s ${OUTDIR}/*.o main.cc

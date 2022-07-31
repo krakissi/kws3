@@ -35,7 +35,7 @@ public:
 	inline struct sockaddr_in& addr_client(){ return m_addr_client; }
 
 	ssize_t tryRead();
-	ssize_t tryWrite(const std::string &msg);
+	ssize_t tryWrite(const std::string &msg) const;
 
 	virtual int readFailure(int code) { return 0; }
 	virtual int readSuccess(ssize_t rc, const char *buf) { return 0; }
