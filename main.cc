@@ -4,15 +4,18 @@
 #include <unistd.h>
 #include <cstring>
 
-using namespace std;
-
 #include "util.h"
 #include "tcpListener.h"
 #include "httpConnection.h"
 
+using namespace std;
+
 int main(int argc, char **argv){
 	TcpListener listener(9003);
 	struct sockaddr_in socket_addr_client = {};
+
+	if(!listener.valid())
+		return 1;
 
 	// Wait for a connection and process it.
 	while(true){
@@ -21,7 +24,7 @@ int main(int argc, char **argv){
 		int sockfd_client = listener.accept(socket_addr_client);
 
 		if(sockfd_client < 0)
-			return 4;
+			return 2;
 
 		// Read and write to the socket.
 		{

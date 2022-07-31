@@ -21,7 +21,6 @@ class TcpListener {
 	void cleanup();
 
 public:
-
 	TcpListener(int port) :
 		m_fd(-1),
 		m_addr({
@@ -38,6 +37,8 @@ public:
 	~TcpListener(){
 		cleanup();
 	}
+
+	inline bool valid() const { return (m_error == 0); }
 
 	// Blocks until a new connection opens, returns file descriptor.
 	int accept(struct sockaddr_in &addr_client);
