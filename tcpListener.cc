@@ -41,7 +41,7 @@ bool TcpListener::init(){
 	return true;
 }
 
-int TcpListener::accept(struct sockaddr_in &addr_client){
+int TcpListener::accept(struct sockaddr_in &addr_client) const {
 	socklen_t client_length = sizeof(addr_client);
 	int fd = accept4(m_fd, (struct sockaddr*) &addr_client, &client_length, (SOCK_NONBLOCK | SOCK_CLOEXEC));
 

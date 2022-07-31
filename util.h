@@ -8,6 +8,7 @@
 
 #include <string>
 
+// If a string contains \r or \n, replace the first instance of either with 0 (null-terminator).
 void chomp(std::string &str);
 
 #endif

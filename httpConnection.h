@@ -13,6 +13,18 @@
 class HttpConnection {
 	bool m_valid;
 
+	enum RequestMethod {
+		HTTP_METHOD_UNSET,
+		HTTP_METHOD_GET,
+		HTTP_METHOD_POST,
+	} m_method;
+
+	std::string m_uri, m_version;
+	std::unordered_map<std::string, std::string> m_headers;
+
+	std::string m_body;
+
+
 	static struct DebugStats {
 		uint64_t
 			m_validRequest,
@@ -29,18 +41,6 @@ class HttpConnection {
 	} s_debugStats;
 
 public:
-	enum RequestMethod {
-		HTTP_METHOD_UNSET,
-		HTTP_METHOD_GET,
-		HTTP_METHOD_POST,
-	} m_method;
-
-	std::string m_uri, m_version;
-	std::unordered_map<std::string, std::string> m_headers;
-
-	std::string m_body;
-
-
 	HttpConnection() :
 		m_valid(false),
 		m_method(HTTP_METHOD_UNSET)
@@ -48,14 +48,14 @@ public:
 
 	inline bool valid() const { return m_valid; }
 
-	// Read headers from a string buffer
+	// Read headers from a string buffer.
 	void parseHeaders(const std::string& buf);
 
-
-	// Static functions
+	// Returns the size in bytes of the received HTTP header, if one could be
+	// parsed from the buf. Otherwise returns 0.
 	static size_t SizeofHeader(const std::string& buf);
 
-	// Debug
+	// Write debug stat data to the provided stream.
 	static void DumpDebugStats(std::stringstream &ss);
 };
 

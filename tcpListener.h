@@ -38,10 +38,11 @@ public:
 		cleanup();
 	}
 
+	// True if the socket was actually opened and can be used.
 	inline bool valid() const { return (m_error == 0); }
 
 	// Blocks until a new connection opens, returns file descriptor.
-	int accept(struct sockaddr_in &addr_client);
+	int accept(struct sockaddr_in &addr_client) const;
 };
 
 #endif

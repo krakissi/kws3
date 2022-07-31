@@ -10,9 +10,9 @@ using namespace std;
 void chomp(string &str){
 	size_t p = str.find('\r');
 
-	if(p != string::npos)
+	if(p != string::npos){
 		str[p] = 0;
-	else {
+	} else {
 		p = str.find('\n');
 
 		if(p != string::npos)
