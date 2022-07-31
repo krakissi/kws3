@@ -10,8 +10,6 @@
 #include <sstream>
 #include <unordered_map>
 
-using namespace std;
-
 class HttpConnection {
 	bool m_valid;
 
@@ -37,10 +35,10 @@ public:
 		HTTP_METHOD_POST,
 	} m_method;
 
-	string m_uri, m_version;
-	unordered_map<string, string> m_headers;
+	std::string m_uri, m_version;
+	std::unordered_map<std::string, std::string> m_headers;
 
-	string m_body;
+	std::string m_body;
 
 
 	HttpConnection() :
@@ -51,14 +49,14 @@ public:
 	inline bool valid() const { return m_valid; }
 
 	// Read headers from a string buffer
-	void parseHeaders(const string& buf);
+	void parseHeaders(const std::string& buf);
 
 
 	// Static functions
-	static size_t SizeofHeader(const string& buf);
+	static size_t SizeofHeader(const std::string& buf);
 
 	// Debug
-	static void DumpDebugStats(stringstream &ss);
+	static void DumpDebugStats(std::stringstream &ss);
 };
 
 #endif

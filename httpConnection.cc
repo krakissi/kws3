@@ -6,6 +6,8 @@
 #include "httpConnection.h"
 #include "util.h"
 
+using namespace std;
+
 HttpConnection::DebugStats HttpConnection::s_debugStats = { 0 };
 
 void HttpConnection::parseHeaders(const string &buf){
