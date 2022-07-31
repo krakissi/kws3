@@ -6,7 +6,6 @@
 #ifndef KWS3_HTTP_CONNECTION_H
 #define KWS3_HTTP_CONNECTION_H
 
-#include <iostream>
 #include <sstream>
 #include <unordered_map>
 

@@ -8,6 +8,8 @@
 #include <cstring>
 #include <unistd.h>
 
+#include <sys/types.h>
+
 using namespace std;
 
 void Connection::connection_cleanup(){
