@@ -80,25 +80,17 @@ void HttpConnection::parseHeaders(){
 }
 
 int HttpConnection::readFailure(int code){
-	switch(code){
-		case EAGAIN:
-			if(m_emptycounter < 500){
-				// No data, so wait and increment counter.
-				usleep(
-					((++ m_emptycounter > 10) ?
-						10000 : /* Wait 10ms if no data recently arrived. We might timeout. */
-						100)    /* Wait 100us if data recently arrived, as more may quickly be coming. */
-				);
+	if((code == EAGAIN) && (m_emptycounter < 500)){
+		// No data, so wait and increment counter. Wait longer if we have not
+		// received data for several consecutive reads.
+		usleep( ((++ m_emptycounter > 10) ? 10000 : 100) );
 
-				// Read will retry if return code is -1.
-				return -1;
-			}
-			// Fall-through to default error case, breaking read loop.
-
-		default:
-			// Cause the read loop to break by returning 0.
-			return 0;
+		// Read will retry if return code is -1.
+		return -1;
 	}
+
+	// Finished reading.
+	return 0;
 }
 
 int HttpConnection::readSuccess(ssize_t rc, const char *buf){
