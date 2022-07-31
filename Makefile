@@ -15,11 +15,15 @@ ${OUTDIR}:
 ${OUTDIR}/util.o: util.h util.cc
 	g++ -o ${OUTDIR}/util.o -c util.cc
 
+${OUTDIR}/tcpListener.o: tcpListener.h tcpListener.cc
+	g++ -o ${OUTDIR}/tcpListener.o -c tcpListener.cc
+
 ${OUTDIR}/httpConnection.o: httpConnection.h httpConnection.cc
 	g++ -o ${OUTDIR}/httpConnection.o -c httpConnection.cc
 
 ${KWS3}: ${OUTDIR}                     \
 		main.cc                        \
 		${OUTDIR}/util.o               \
+		${OUTDIR}/tcpListener.o        \
 		${OUTDIR}/httpConnection.o
 	g++ -o "${KWS3}" -s ${OUTDIR}/*.o main.cc

@@ -1,54 +1,24 @@
 #include <iostream>
 #include <sstream>
-#include <unordered_map>
-
-#include <arpa/inet.h>
-
-#include <sys/types.h>
-#include <sys/socket.h>
 
 #include <unistd.h>
 #include <cstring>
 
 using namespace std;
 
-#include "httpConnection.h"
 #include "util.h"
+#include "tcpListener.h"
+#include "httpConnection.h"
 
 int main(int argc, char **argv){
-	int sockfd;
-
-	struct sockaddr_in socket_addr = {
-		.sin_family = AF_INET,
-		.sin_port = htons(9003),
-		.sin_addr = { .s_addr = htonl(INADDR_ANY) }
-	};
-
+	TcpListener listener(9003);
 	struct sockaddr_in socket_addr_client = {};
-
-	if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-		return 1;
-
-	/*	SO_REUSEADDR is set so that we don't need to wait for all the
-	 *	existing connections to close when restarting the server. */
-	{
-		int optval = 2;
-
-		setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
-	}
-
-	if(bind(sockfd, (struct sockaddr*) &socket_addr, sizeof(socket_addr)) == -1)
-		return 2;
-
-	if(listen(sockfd, 64) == -1)
-		return 3;
 
 	// Wait for a connection and process it.
 	while(true){
 		HttpConnection conn;
 
-		socklen_t client_length = sizeof(socket_addr_client);
-		int sockfd_client = accept4(sockfd, (struct sockaddr*) &socket_addr_client, &client_length, (SOCK_NONBLOCK | SOCK_CLOEXEC));
+		int sockfd_client = listener.accept(socket_addr_client);
 
 		if(sockfd_client < 0)
 			return 4;
@@ -143,6 +113,5 @@ int main(int argc, char **argv){
 		}
 	}
 
-	close(sockfd);
 	return 0;
 }
