@@ -7,7 +7,7 @@ run: all
 	${KWS3}
 
 stop:
-	echo shutdown | nc localhost 9003
+	echo 'shutdown; quit' | nc localhost 9003
 
 clean:
 	rm -rf "${OUTDIR}"
@@ -65,4 +65,4 @@ ${OUTDIR}/server.o:                    \
 ${KWS3}: ${OUTDIR}                     \
 		main.cc                        \
 		${OUTDIR}/server.o
-	g++ -o "${KWS3}" -s ${OUTDIR}/*.o main.cc
+	g++ -o "${KWS3}" ${OUTDIR}/*.o main.cc

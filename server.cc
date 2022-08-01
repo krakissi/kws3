@@ -63,6 +63,7 @@ bool Kws3::run(){
 					// Child task is done and we can close this pipe.
 					erase = true;
 				} else if(msg == "shutdown"){
+					bc->write()->tryWrite("done");
 					return false;
 				}
 			}

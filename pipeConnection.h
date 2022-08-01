@@ -18,11 +18,6 @@ public:
 		m_fd = fd;
 	}
 
-	virtual ~PipeConnection(){
-		if(m_write)
-			tryWrite("done");
-	}
-
 	virtual int readFailure(int code) override;
 
 	bool nextMsg(std::string &msg);

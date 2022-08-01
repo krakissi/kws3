@@ -6,8 +6,8 @@
 #include "connection.h"
 
 #include <cstring>
-#include <unistd.h>
 
+#include <unistd.h>
 #include <sys/types.h>
 
 using namespace std;

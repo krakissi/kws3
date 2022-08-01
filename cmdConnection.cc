@@ -16,6 +16,22 @@
 
 using namespace std;
 
+size_t findFirstOf(string needles, const string &str){
+	size_t p = str.size();
+
+	for(auto c : needles){
+		size_t n = str.find(c);
+
+		if((n != string::npos) && (n < p))
+			p = n;
+	}
+
+	if(p == str.size())
+		return string::npos;
+
+	return p;
+}
+
 CmdConnection::DebugStats *CmdConnection::s_debugStats = nullptr;
 
 bool CmdConnection::receiveCmd(){
@@ -33,7 +49,7 @@ bool CmdConnection::receiveCmd(){
 	}
 
 	// Display prompt.
-	{
+	if(m_sockstream.str().empty()){
 		stringstream css;
 
 		css << endl << (m_pipe ? "" : "(d/c)") << "> ";
@@ -68,11 +84,11 @@ bool CmdConnection::receiveCmd(){
 			// Complete
 			return false;
 
-	} while(m_sockstream.str().find('\n') == string::npos);
+	} while(findFirstOf("\n;", m_sockstream.str()) == string::npos);
 
 	string cmd = m_sockstream.str();
 	{
-		size_t p = cmd.find('\n');
+		size_t p = findFirstOf("\n;", cmd);
 
 		// Invalid command, something has gone wrong.
 		if(p == string::npos)
@@ -109,10 +125,12 @@ void CmdConnection::execCommand(const string cmd){
 			execCommand(m_lastCmd);
 			return;
 		} else if(verb == "quit"){
+			if(m_pipe)
+				m_pipe->write()->tryWrite("done");
+
 			// Close this bad boy out.
 			oss << "goodbye" << endl;
 			m_valid = false;
-
 		} else if(verb == "shutdown"){
 			// Stop the entire server.
 			if(m_pipe){
@@ -120,7 +138,6 @@ void CmdConnection::execCommand(const string cmd){
 
 				if(m_pipe->write()->tryWrite("shutdown") > 0){
 					oss << "goodnight";
-					//m_valid = false;
 				} else {
 					oss << "failed";
 				}
