@@ -12,7 +12,6 @@
 #include "connection.h"
 
 class HttpConnection : public Connection {
-	bool m_valid;
 
 	enum RequestMethod {
 		HTTP_METHOD_UNSET,
@@ -55,16 +54,9 @@ class HttpConnection : public Connection {
 
 public:
 	HttpConnection() :
-		m_valid(false),
 		m_headersize(0),
 		m_method(HTTP_METHOD_UNSET)
 	{}
-
-	// from Connection
-	int readFailure(int code) override;
-	int readSuccess(ssize_t rc, const char *buf) override;
-
-	inline bool valid() const { return m_valid; }
 
 	// Read from the socket and look for an incoming HTTP request.
 	void receiveRequest();

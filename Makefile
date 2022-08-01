@@ -35,11 +35,19 @@ ${OUTDIR}/httpConnection.o:            \
 		${OUTDIR}/connection.o
 	g++ -o ${OUTDIR}/httpConnection.o -c httpConnection.cc
 
+${OUTDIR}/cmdConnection.o:             \
+		cmdConnection.h                \
+		cmdConnection.cc               \
+		${OUTDIR}/util.o               \
+		${OUTDIR}/connection.o
+	g++ -o ${OUTDIR}/cmdConnection.o -c cmdConnection.cc
+
 ${OUTDIR}/server.o:                    \
 		server.h                       \
 		server.cc                      \
 		${OUTDIR}/tcpListener.o        \
-		${OUTDIR}/httpConnection.o
+		${OUTDIR}/httpConnection.o     \
+		${OUTDIR}/cmdConnection.o
 	g++ -o ${OUTDIR}/server.o -c server.cc
 
 ${KWS3}: ${OUTDIR}                     \

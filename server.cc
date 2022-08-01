@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include "httpConnection.h"
+#include "cmdConnection.h"
 
 using namespace std;
 
@@ -42,18 +43,22 @@ bool Kws3::run(){
 
 		// Command interface
 		{
-			// FIXME create a CmdConnection instead
-			HttpConnection conn;
+			CmdConnection conn;
 
 			if(m_cmd_listener.accept(conn) >= 0){
 				acceptedConnection = true;
 
-				// FIXME - create a CmdConnection instead, do command processing.
+				// TODO - fork here
 
-				// FIXME debug - receive and echo an HTTP request
-				conn.receiveRequest();
-				if(conn.valid())
-					conn.echoRequest();
+				while(conn.receiveCmd());
+
+				// FIXME debug
+				{
+					stringstream ss;
+
+					CmdConnection::DumpDebugStats(ss);
+					cout << ss.str();
+				}
 			}
 		}
 
@@ -64,12 +69,22 @@ bool Kws3::run(){
 			if(l->accept(conn) >= 0){
 				acceptedConnection = true;
 
+				// TODO - fork here
+
 				// Read from socket, look for incoming HTTP request.
 				conn.receiveRequest();
 
 				// Echo back if we parsed a request.
 				if(conn.valid())
 					conn.echoRequest();
+
+				// FIXME debug
+				{
+					stringstream ss;
+
+					HttpConnection::DumpDebugStats(ss);
+					cout << ss.str();
+				}
 			}
 		}
 
@@ -94,15 +109,6 @@ bool Kws3::run(){
 
 		// Reset the pass counter, so we will enter high-frequency polling mode
 		m_acceptPassCount = 0;
-	}
-
-
-	// FIXME debug
-	{
-		stringstream ss;
-
-		HttpConnection::DumpDebugStats(ss);
-		cout << ss.str();
 	}
 
 	// TODO - add a shutdown mechanism which allows this to return false.

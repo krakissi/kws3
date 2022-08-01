@@ -4,9 +4,10 @@
 */
 
 #include "httpConnection.h"
-#include "util.h"
 
 #include <unistd.h>
+
+#include "util.h"
 
 using namespace std;
 
@@ -79,29 +80,8 @@ void HttpConnection::parseHeaders(){
 	m_valid = true;
 }
 
-int HttpConnection::readFailure(int code){
-	if((code == EAGAIN) && (m_emptycounter < 500)){
-		// No data, so wait and increment counter. Wait longer if we have not
-		// received data for several consecutive reads.
-		usleep( ((++ m_emptycounter > 10) ? 10000 : 100) );
-
-		// Read will retry if return code is -1.
-		return -1;
-	}
-
-	// Finished reading.
-	return 0;
-}
-
-int HttpConnection::readSuccess(ssize_t rc, const char *buf){
-	if(rc > 0)
-		m_sockstream << buf;
-
-	return rc;
-}
-
 void HttpConnection::receiveRequest(){
-	m_emptycounter = 0;
+	prepareToRead();
 
 	do {
 		int rc = tryRead();
