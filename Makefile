@@ -7,7 +7,7 @@ run: all
 	${KWS3}
 
 stop:
-	killall ${KWS3}
+	echo shutdown | nc localhost 9003
 
 clean:
 	rm -rf "${OUTDIR}"

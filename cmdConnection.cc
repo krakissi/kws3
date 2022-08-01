@@ -54,82 +54,91 @@ bool CmdConnection::receiveCmd(){
 		cmd = cmd.substr(0, p);
 	}
 
-	++ s_debugStats->m_cmdReceived;
-
-	// Parse command string. It should start with some verb.
-	{
-		stringstream sss(cmd), oss;
-		string verb;
-
-		sss >> verb;
-		if(!sss){
-			oss << "?" << endl;
-		} else {
-			if(verb == "quit"){
-				// Close this bad boy out.
-				oss << "goodbye" << endl;
-				m_valid = false;
-
-			} else if(verb == "shutdown"){
-				// Stop the entire server.
-				if(m_pipe){
-					oss << "sending shutdown signal: ";
-
-					if(m_pipe->tryWrite("shutdown") > 0){
-						oss << "goodnight";
-						m_valid = false;
-					} else {
-						oss << "failed";
-					}
-
-					oss << endl;
-				} else {
-					oss << "PipeConnection not available" << endl;
-				}
-			} else if(verb == "echo"){
-				// Echo the command back
-				if(sss.str().size() > verb.size() + 1)
-					oss << "-> " << sss.str().substr(verb.size() + 1) << endl;
-
-			} else if(verb == "show"){
-				string what;
-				sss >> what;
-
-				if(!sss){
-					oss << "show what?" << endl;
-					oss << "  try : stats" << endl;
-				} else {
-					if(what == "stats"){
-						string table;
-						sss >> table;
-
-						if(!sss){
-							oss << "show which stat table?" << endl;
-							oss << "  try: HttpConnection CmdConnection" << endl;
-						} else {
-							if(table == "HttpConnection"){
-								HttpConnection::DumpDebugStats(oss);
-							} else if(table == "CmdConnection"){
-								CmdConnection::DumpDebugStats(oss);
-							} else {
-								oss << "show: unknown stat table \"" << table << "\"" << endl;
-							}
-						}
-					} else {
-						oss << "show: unknown item \"" << what << "\"" << endl;
-					}
-				}
-			} else {
-				// Display the verb if we didn't understand it.
-				oss << "unknown verb: " << verb << endl;
-			}
-		}
-
-		tryWrite(oss.str());
-	}
+	execCommand(cmd);
 
 	// 0 is generally a timeout.
 	return true;
+}
+
+void CmdConnection::execCommand(const string cmd){
+	++ s_debugStats->m_cmdReceived;
+
+	// Parse command string. It should start with some verb.
+	stringstream sss(cmd), oss;
+	string verb;
+
+	sss >> verb;
+	if(!sss){
+		oss << "?" << endl;
+	} else {
+		if(verb == "!!"){
+			// Repeat the last command.
+			execCommand(m_lastCmd);
+			return;
+		} else if(verb == "quit"){
+			// Close this bad boy out.
+			oss << "goodbye" << endl;
+			m_valid = false;
+
+		} else if(verb == "shutdown"){
+			// Stop the entire server.
+			if(m_pipe){
+				oss << "sending shutdown signal: ";
+
+				if(m_pipe->tryWrite("shutdown") > 0){
+					oss << "goodnight";
+					m_valid = false;
+				} else {
+					oss << "failed";
+				}
+
+				oss << endl;
+			} else {
+				oss << "PipeConnection not available" << endl;
+			}
+		} else if(verb == "echo"){
+			// Echo the command back
+			if(sss.str().size() > verb.size() + 1)
+				oss << "-> " << sss.str().substr(verb.size() + 1) << endl;
+
+		} else if(verb == "show"){
+			string what;
+			sss >> what;
+
+			if(!sss){
+				oss << "show what?" << endl;
+				oss << "  try : stats" << endl;
+			} else {
+				if(what == "stats"){
+					string table;
+					sss >> table;
+
+					if(!sss){
+						oss << "show which stat table?" << endl;
+						oss << "  try: HttpConnection CmdConnection" << endl;
+					} else {
+						if(table == "HttpConnection"){
+							HttpConnection::DumpDebugStats(oss);
+						} else if(table == "CmdConnection"){
+							CmdConnection::DumpDebugStats(oss);
+						} else {
+							oss << "show: unknown stat table \"" << table << "\"" << endl;
+						}
+					}
+				} else {
+					oss << "show: unknown item \"" << what << "\"" << endl;
+				}
+			}
+		} else {
+			// Display the verb if we didn't understand it.
+			oss << "unknown verb: " << verb << endl;
+		}
+
+		// Store this command to potentially repeat.
+		m_lastCmd = cmd;
+	}
+
+	tryWrite(oss.str());
 }
 
 void CmdConnection::DumpDebugStats(stringstream &ss){

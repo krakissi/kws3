@@ -11,6 +11,8 @@
 class CmdConnection : public Connection {
 	Connection *m_pipe;
 
+	std::string m_lastCmd;
+
 public:
 	static struct DebugStats {
 		uint64_t
@@ -37,6 +39,7 @@ public:
 	inline void setPipe(Connection *p){ m_pipe = p; }
 
 	bool receiveCmd();
+	void execCommand(const std::string cmd);
 
 	// Write debug stat data to the provided stream.
 	static void DumpDebugStats(std::stringstream &ss);
