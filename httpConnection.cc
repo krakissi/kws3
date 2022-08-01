@@ -48,7 +48,10 @@ void HttpConnection::parseHeaders(){
 			return;
 		}
 
-		if(method == "GET"){
+		if(method == "HEAD"){
+			++ s_debugStats->m_numMethodHead;
+			m_method = HTTP_METHOD_HEAD;
+		} else if(method == "GET"){
 			++ s_debugStats->m_numMethodGet;
 			m_method = HTTP_METHOD_GET;
 		} else if(method == "POST"){
@@ -124,6 +127,7 @@ void HttpConnection::DumpDebugStats(stringstream &ss){
 		<< "| m_invalidRequestMethodNotImpl: " << s_debugStats->m_invalidRequestMethodNotImpl << endl
 		<< "|    m_invalidRequestIncomplete: " << s_debugStats->m_invalidRequestIncomplete << endl
 		<< "|" << endl
+		<< "|               m_numMethodHead: " << s_debugStats->m_numMethodHead << endl
 		<< "|                m_numMethodGet: " << s_debugStats->m_numMethodGet << endl
 		<< "|               m_numMethodPost: " << s_debugStats->m_numMethodPost << endl
 		<< "+" << endl;

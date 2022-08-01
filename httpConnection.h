@@ -15,6 +15,7 @@ class HttpConnection : public Connection {
 
 	enum RequestMethod {
 		HTTP_METHOD_UNSET,
+		HTTP_METHOD_HEAD,
 		HTTP_METHOD_GET,
 		HTTP_METHOD_POST,
 	} m_method;
@@ -45,6 +46,7 @@ public:
 			m_invalidRequestMethodNotImpl,
 			m_invalidRequestIncomplete,
 
+			m_numMethodHead,
 			m_numMethodGet,
 			m_numMethodPost,
 
