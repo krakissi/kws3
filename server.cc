@@ -131,6 +131,8 @@ bool Kws3::run(){
 					if(havePipes){
 						close(fd_east[0]);
 						close(fd_east[1]);
+						close(fd_west[0]);
+						close(fd_west[1]);
 					}
 				}
 
