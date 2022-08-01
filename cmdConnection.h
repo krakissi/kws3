@@ -14,8 +14,6 @@ class CmdConnection : public Connection {
 		uint64_t
 			m_cmdReceived,
 
-			m_invalidConn,
-
 			m_lastone;
 
 	} s_debugStats;
