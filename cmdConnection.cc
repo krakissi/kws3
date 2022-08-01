@@ -70,6 +70,22 @@ bool CmdConnection::receiveCmd(){
 				oss << "goodbye" << endl;
 				m_valid = false;
 
+			} else if(verb == "shutdown"){
+				// Stop the entire server.
+				if(m_pipe){
+					oss << "sending shutdown signal: ";
+
+					if(m_pipe->tryWrite("shutdown") > 0){
+						oss << "goodnight";
+						m_valid = false;
+					} else {
+						oss << "failed";
+					}
+
+					oss << endl;
+				} else {
+					oss << "PipeConnection not available" << endl;
+				}
 			} else if(verb == "echo"){
 				// Echo the command back
 				if(sss.str().size() > verb.size() + 1)
@@ -119,6 +135,8 @@ bool CmdConnection::receiveCmd(){
 void CmdConnection::DumpDebugStats(stringstream &ss){
 	ss << "+ CmdConnection DebugStats" << endl
 		<< "| m_cmdReceived: " << s_debugStats->m_cmdReceived << endl
+		<< "|" << endl
+		<< "| m_pipesActive: " << s_debugStats->m_pipesActive << endl
 		<< "+" << endl;
 }
 

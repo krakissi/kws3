@@ -9,10 +9,12 @@
 #include <list>
 
 #include "tcpListener.h"
+#include "pipeConnection.h"
 
 
 class Kws3 {
 	TcpListener m_cmd_listener;
+	std::list<PipeConnection*> m_pipes;
 
 	// This should probably be a map of port:listener*
 	std::list<TcpListener*> m_http_listeners;

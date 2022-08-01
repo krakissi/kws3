@@ -9,21 +9,32 @@
 #include "connection.h"
 
 class CmdConnection : public Connection {
+	Connection *m_pipe;
+
 public:
 	static struct DebugStats {
 		uint64_t
 			m_cmdReceived,
+
+			m_pipesActive,
 
 			m_lastone;
 
 	} *s_debugStats;
 
 
-	CmdConnection()
+	CmdConnection() :
+		m_pipe(nullptr)
 	{
 		m_valid = true;
 		m_readAgainTimeout = 6000; /* 60 seconds (6000 * 10ms) */
 	}
+
+	~CmdConnection(){
+		delete m_pipe;
+	}
+
+	inline void setPipe(Connection *p){ m_pipe = p; }
 
 	bool receiveCmd();
 

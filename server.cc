@@ -8,6 +8,7 @@
 #include <iostream>
 
 #include <unistd.h>
+#include <fcntl.h>
 
 #include "httpConnection.h"
 #include "cmdConnection.h"
@@ -26,6 +27,10 @@ void Kws3::cleanup(){
 	// Delete server listeners
 	for(auto l : m_http_listeners)
 		delete l;
+
+	// Delete any open pipe connections
+	for(auto pc : m_pipes)
+		delete pc;
 
 	HttpConnection::UninitStats();
 	CmdConnection::UninitStats();
@@ -47,18 +52,78 @@ bool Kws3::run(){
 	{
 		bool acceptedConnection = false;
 
+		// Pipes from child tasks
+		for(auto it = m_pipes.begin(); it != m_pipes.end(); ){
+			PipeConnection *pc = *it;
+			bool erase = false;
+			string msg;
+
+			if(pc->nextMsg(msg)){
+				if(msg == "done"){
+					// Child task is done and we can close this pipe.
+					erase = true;
+				} else if(msg == "shutdown"){
+					return false;
+				}
+			}
+
+			if(erase){
+				-- CmdConnection::s_debugStats->m_pipesActive;
+				it = m_pipes.erase(it);
+				delete pc;
+			} else {
+				++ it;
+			}
+		}
+
 		// Command interface
 		{
 			CmdConnection conn;
 
 			if(m_cmd_listener.accept(conn) >= 0){
+				int pipe_fd[2];
+				bool havePipes = false;
 				pid_t pid;
 
+				if(!pipe2(pipe_fd, (O_NONBLOCK | O_DIRECT))){
+					// Configure pipes to allow the child process to write back commands to this server.
+					havePipes = true;
+				}
+
 				if(!(pid = fork())){
+					// Child task
+					if(havePipes){
+						PipeConnection *pc = new PipeConnection();
+
+						pc->fd(pipe_fd[1]);
+						close(pipe_fd[0]);
+
+						conn.setPipe(pc);
+					}
+
 					conn.tryWrite("hello\n");
 					while(conn.receiveCmd());
 
 					return false;
+				} else if(pid > 0){
+					// Parent task
+					if(havePipes){
+						PipeConnection *pc = new PipeConnection();
+
+						// Plumb to the read side of the pipe.
+						pc->fd(pipe_fd[0]);
+
+						// Close write side of the pipe.
+						close(pipe_fd[1]);
+
+						m_pipes.push_back(pc);
+						++ CmdConnection::s_debugStats->m_pipesActive;
+					}
+				} else {
+					if(havePipes){
+						close(pipe_fd[0]);
+						close(pipe_fd[1]);
+					}
 				}
 
 				acceptedConnection = true;

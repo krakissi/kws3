@@ -34,7 +34,7 @@ public:
 		m_addr_client({})
 	{}
 
-	~Connection(){
+	virtual ~Connection(){
 		connection_cleanup();
 	}
 
