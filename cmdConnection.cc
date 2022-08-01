@@ -8,13 +8,14 @@
 #include <iostream>
 
 #include <unistd.h>
+#include <sys/mman.h>
 
 #include "util.h"
 #include "httpConnection.h"
 
 using namespace std;
 
-CmdConnection::DebugStats CmdConnection::s_debugStats = { 0 };
+CmdConnection::DebugStats *CmdConnection::s_debugStats = nullptr;
 
 bool CmdConnection::receiveCmd(){
 	if(!valid())
@@ -53,7 +54,7 @@ bool CmdConnection::receiveCmd(){
 		cmd = cmd.substr(0, p);
 	}
 
-	++ s_debugStats.m_cmdReceived;
+	++ s_debugStats->m_cmdReceived;
 
 	// Parse command string. It should start with some verb.
 	{
@@ -117,6 +118,17 @@ bool CmdConnection::receiveCmd(){
 
 void CmdConnection::DumpDebugStats(stringstream &ss){
 	ss << "+ CmdConnection DebugStats" << endl
-		<< "| m_cmdReceived: " << s_debugStats.m_cmdReceived << endl
+		<< "| m_cmdReceived: " << s_debugStats->m_cmdReceived << endl
 		<< "+" << endl;
+}
+
+void CmdConnection::InitStats(){
+	s_debugStats = (DebugStats*) mmap(NULL, sizeof(DebugStats), (PROT_READ | PROT_WRITE), (MAP_SHARED | MAP_ANONYMOUS), -1, 0);
+}
+
+void CmdConnection::UninitStats(){
+	if(s_debugStats)
+		munmap(s_debugStats, sizeof(DebugStats));
+
+	s_debugStats = nullptr;
 }

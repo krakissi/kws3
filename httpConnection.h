@@ -35,7 +35,7 @@ class HttpConnection : public Connection {
 	// Read headers from a string buffer.
 	void parseHeaders();
 
-
+public:
 	static struct DebugStats {
 		uint64_t
 			m_validRequest,
@@ -50,9 +50,8 @@ class HttpConnection : public Connection {
 
 			m_lastone;
 
-	} s_debugStats;
+	} *s_debugStats;
 
-public:
 	HttpConnection() :
 		m_headersize(0),
 		m_method(HTTP_METHOD_UNSET)
@@ -66,6 +65,10 @@ public:
 
 	// Write debug stat data to the provided stream.
 	static void DumpDebugStats(std::stringstream &ss);
+
+	// Manage shared memory for the stat table.
+	static void InitStats();
+	static void UninitStats();
 };
 
 #endif

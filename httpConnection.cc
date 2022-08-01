@@ -6,12 +6,13 @@
 #include "httpConnection.h"
 
 #include <unistd.h>
+#include <sys/mman.h>
 
 #include "util.h"
 
 using namespace std;
 
-HttpConnection::DebugStats HttpConnection::s_debugStats = { 0 };
+HttpConnection::DebugStats *HttpConnection::s_debugStats = nullptr;
 
 size_t HttpConnection::sizeofHeaders(){
 	stringstream ss(m_sockstream.str());
@@ -41,24 +42,24 @@ void HttpConnection::parseHeaders(){
 		sss >> method >> m_uri >> m_version;
 
 		if(!sss){
-			++ s_debugStats.m_invalidRequest;
-			++ s_debugStats.m_invalidRequestBadFirstLine;
+			++ s_debugStats->m_invalidRequest;
+			++ s_debugStats->m_invalidRequestBadFirstLine;
 			m_valid = false;
 			return;
 		}
 
 		if(method == "GET"){
-			++ s_debugStats.m_numMethodGet;
+			++ s_debugStats->m_numMethodGet;
 			m_method = HTTP_METHOD_GET;
 		} else if(method == "POST"){
-			++ s_debugStats.m_numMethodPost;
+			++ s_debugStats->m_numMethodPost;
 			m_method = HTTP_METHOD_POST;
 		}
 
 		// Unknown request method!
 		if(m_method == HTTP_METHOD_UNSET){
-			++ s_debugStats.m_invalidRequest;
-			++ s_debugStats.m_invalidRequestMethodNotImpl;
+			++ s_debugStats->m_invalidRequest;
+			++ s_debugStats->m_invalidRequestMethodNotImpl;
 
 			// TODO Return method not implemented
 			m_valid = false;
@@ -76,7 +77,7 @@ void HttpConnection::parseHeaders(){
 		// Parse the rest of the headers.
 	}
 
-	++ s_debugStats.m_validRequest;
+	++ s_debugStats->m_validRequest;
 	m_valid = true;
 }
 
@@ -105,8 +106,8 @@ void HttpConnection::receiveRequest(){
 		// Possibly a valid request, let's try to parse it.
 		parseHeaders();
 	} else {
-		++ s_debugStats.m_invalidRequest;
-		++ s_debugStats.m_invalidRequestIncomplete;
+		++ s_debugStats->m_invalidRequest;
+		++ s_debugStats->m_invalidRequestIncomplete;
 	}
 }
 
@@ -116,14 +117,25 @@ void HttpConnection::echoRequest(){
 
 void HttpConnection::DumpDebugStats(stringstream &ss){
 	ss << "+ HttpConnection DebugStats" << endl
-		<< "|                m_validRequest: " << s_debugStats.m_validRequest << endl
+		<< "|                m_validRequest: " << s_debugStats->m_validRequest << endl
 		<< "|" << endl
-		<< "|              m_invalidRequest: " << s_debugStats.m_invalidRequest << endl
-		<< "|  m_invalidRequestBadFirstLine: " << s_debugStats.m_invalidRequestBadFirstLine << endl
-		<< "| m_invalidRequestMethodNotImpl: " << s_debugStats.m_invalidRequestMethodNotImpl << endl
-		<< "|    m_invalidRequestIncomplete: " << s_debugStats.m_invalidRequestIncomplete << endl
+		<< "|              m_invalidRequest: " << s_debugStats->m_invalidRequest << endl
+		<< "|  m_invalidRequestBadFirstLine: " << s_debugStats->m_invalidRequestBadFirstLine << endl
+		<< "| m_invalidRequestMethodNotImpl: " << s_debugStats->m_invalidRequestMethodNotImpl << endl
+		<< "|    m_invalidRequestIncomplete: " << s_debugStats->m_invalidRequestIncomplete << endl
 		<< "|" << endl
-		<< "|                m_numMethodGet: " << s_debugStats.m_numMethodGet << endl
-		<< "|               m_numMethodPost: " << s_debugStats.m_numMethodPost << endl
+		<< "|                m_numMethodGet: " << s_debugStats->m_numMethodGet << endl
+		<< "|               m_numMethodPost: " << s_debugStats->m_numMethodPost << endl
 		<< "+" << endl;
+}
+
+void HttpConnection::InitStats(){
+	s_debugStats = (DebugStats*) mmap(NULL, sizeof(DebugStats), (PROT_READ | PROT_WRITE), (MAP_SHARED | MAP_ANONYMOUS), -1, 0);
+}
+
+void HttpConnection::UninitStats(){
+	if(s_debugStats)
+		munmap(s_debugStats, sizeof(DebugStats));
+
+	s_debugStats = nullptr;
 }

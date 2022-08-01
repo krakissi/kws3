@@ -17,12 +17,18 @@ using namespace std;
 void Kws3::init(){
 	// FIXME debug - create listeners via configuration instead
 	m_http_listeners.push_back(new TcpListener(9005));
+
+	HttpConnection::InitStats();
+	CmdConnection::InitStats();
 }
 
 void Kws3::cleanup(){
 	// Delete server listeners
 	for(auto l : m_http_listeners)
 		delete l;
+
+	HttpConnection::UninitStats();
+	CmdConnection::UninitStats();
 }
 
 bool Kws3::valid() const {
@@ -46,13 +52,16 @@ bool Kws3::run(){
 			CmdConnection conn;
 
 			if(m_cmd_listener.accept(conn) >= 0){
+				pid_t pid;
+
+				if(!(pid = fork())){
+					conn.tryWrite("hello\n");
+					while(conn.receiveCmd());
+
+					return false;
+				}
+
 				acceptedConnection = true;
-
-				// TODO - fork here
-
-				conn.tryWrite("hello\n");
-
-				while(conn.receiveCmd());
 			}
 		}
 
@@ -61,16 +70,20 @@ bool Kws3::run(){
 			HttpConnection conn;
 
 			if(l->accept(conn) >= 0){
+				pid_t pid;
+
+				if(!(pid = fork())){
+					// Read from socket, look for incoming HTTP request.
+					conn.receiveRequest();
+
+					// Echo back if we parsed a request.
+					if(conn.valid())
+						conn.echoRequest();
+
+					return false;
+				}
+
 				acceptedConnection = true;
-
-				// TODO - fork here
-
-				// Read from socket, look for incoming HTTP request.
-				conn.receiveRequest();
-
-				// Echo back if we parsed a request.
-				if(conn.valid())
-					conn.echoRequest();
 			}
 		}
 

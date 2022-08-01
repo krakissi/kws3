@@ -6,6 +6,9 @@ all: ${KWS3}
 run: all
 	${KWS3}
 
+stop:
+	killall ${KWS3}
+
 clean:
 	rm -rf "${OUTDIR}"
 

@@ -9,16 +9,16 @@
 #include "connection.h"
 
 class CmdConnection : public Connection {
-
+public:
 	static struct DebugStats {
 		uint64_t
 			m_cmdReceived,
 
 			m_lastone;
 
-	} s_debugStats;
+	} *s_debugStats;
 
-public:
+
 	CmdConnection()
 	{
 		m_valid = true;
@@ -29,6 +29,10 @@ public:
 
 	// Write debug stat data to the provided stream.
 	static void DumpDebugStats(std::stringstream &ss);
+
+	// Manage shared memory for the stat table.
+	static void InitStats();
+	static void UninitStats();
 };
 
 #endif
