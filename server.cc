@@ -53,14 +53,6 @@ bool Kws3::run(){
 				conn.tryWrite("hello\n");
 
 				while(conn.receiveCmd());
-
-				// FIXME debug
-				{
-					stringstream ss;
-
-					CmdConnection::DumpDebugStats(ss);
-					cout << ss.str();
-				}
 			}
 		}
 
@@ -79,14 +71,6 @@ bool Kws3::run(){
 				// Echo back if we parsed a request.
 				if(conn.valid())
 					conn.echoRequest();
-
-				// FIXME debug
-				{
-					stringstream ss;
-
-					HttpConnection::DumpDebugStats(ss);
-					cout << ss.str();
-				}
 			}
 		}
 
@@ -105,9 +89,6 @@ bool Kws3::run(){
 
 			return true;
 		}
-
-		// FIXME debug
-		cout << "[m_acceptPassCount=" << m_acceptPassCount << "]" << endl;
 
 		// Reset the pass counter, so we will enter high-frequency polling mode
 		m_acceptPassCount = 0;

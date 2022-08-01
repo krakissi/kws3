@@ -39,6 +39,7 @@ ${OUTDIR}/cmdConnection.o:             \
 		cmdConnection.h                \
 		cmdConnection.cc               \
 		${OUTDIR}/util.o               \
+		${OUTDIR}/httpConnection.o     \
 		${OUTDIR}/connection.o
 	g++ -o ${OUTDIR}/cmdConnection.o -c cmdConnection.cc
 

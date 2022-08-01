@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include "util.h"
+#include "httpConnection.h"
 
 using namespace std;
 
@@ -73,6 +74,34 @@ bool CmdConnection::receiveCmd(){
 				if(sss.str().size() > verb.size() + 1)
 					oss << "-> " << sss.str().substr(verb.size() + 1) << endl;
 
+			} else if(verb == "show"){
+				string what;
+				sss >> what;
+
+				if(!sss){
+					oss << "show what?" << endl;
+					oss << "  try : stats" << endl;
+				} else {
+					if(what == "stats"){
+						string table;
+						sss >> table;
+
+						if(!sss){
+							oss << "show which stat table?" << endl;
+							oss << "  try: HttpConnection CmdConnection" << endl;
+						} else {
+							if(table == "HttpConnection"){
+								HttpConnection::DumpDebugStats(oss);
+							} else if(table == "CmdConnection"){
+								CmdConnection::DumpDebugStats(oss);
+							} else {
+								oss << "show: unknown stat table \"" << table << "\"" << endl;
+							}
+						}
+					} else {
+						oss << "show: unknown item \"" << what << "\"" << endl;
+					}
+				}
 			} else {
 				// Display the verb if we didn't understand it.
 				oss << "unknown verb: " << verb << endl;
