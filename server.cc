@@ -50,6 +50,8 @@ bool Kws3::run(){
 
 				// TODO - fork here
 
+				conn.tryWrite("hello\n");
+
 				while(conn.receiveCmd());
 
 				// FIXME debug

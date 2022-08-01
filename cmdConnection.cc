@@ -19,7 +19,7 @@ bool CmdConnection::receiveCmd(){
 	if(!valid())
 		return false;
 
-	tryWrite("> ");
+	tryWrite("\n> ");
 	prepareToRead();
 
 	int rc;
