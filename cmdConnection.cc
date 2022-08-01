@@ -51,6 +51,9 @@ bool CmdConnection::receiveCmd(){
 				if(msg == "done"){
 					m_pendingError.push_front("remote closed signal pipe!");
 					m_pipe = nullptr;
+
+					// Send bell to indicate a pending error message.
+					tryWrite("\a");
 				}
 			}
 		}
