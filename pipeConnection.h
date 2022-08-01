@@ -9,9 +9,18 @@
 #include "connection.h"
 
 class PipeConnection : public Connection {
+	bool m_write;
+
 public:
+	PipeConnection(int fd, bool isWritePipe) :
+		m_write(isWritePipe)
+	{
+		m_fd = fd;
+	}
+
 	virtual ~PipeConnection(){
-		tryWrite("done");
+		if(m_write)
+			tryWrite("done");
 	}
 
 	virtual int readFailure(int code) override;

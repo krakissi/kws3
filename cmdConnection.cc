@@ -12,6 +12,7 @@
 
 #include "util.h"
 #include "httpConnection.h"
+#include "pipeConnection.h"
 
 using namespace std;
 
@@ -21,11 +22,39 @@ bool CmdConnection::receiveCmd(){
 	if(!valid())
 		return false;
 
-	tryWrite("\n> ");
+	// Write out and pending error messages before the next command prompt.
+	while(m_pendingError.size()){
+		stringstream ess;
+
+		ess << "err: " << m_pendingError.front() << endl;
+		m_pendingError.pop_front();
+
+		tryWrite(ess.str());
+	}
+
+	// Display prompt.
+	{
+		stringstream css;
+
+		css << endl << (m_pipe ? "" : "(d/c)") << "> ";
+		tryWrite(css.str());
+	}
+
 	prepareToRead();
 
 	int rc;
 	do {
+		if(m_pipe){
+			string msg;
+
+			if(((PipeConnection*) m_pipe->read())->nextMsg(msg)){
+				if(msg == "done"){
+					m_pendingError.push_front("remote closed signal pipe!");
+					m_pipe = nullptr;
+				}
+			}
+		}
+
 		rc = tryRead();
 
 		if(rc < 0)
@@ -69,7 +98,8 @@ void CmdConnection::execCommand(const string cmd){
 
 	sss >> verb;
 	if(!sss){
-		oss << "?" << endl;
+		if(m_pendingError.size() == 0)
+			oss << "?" << endl;
 	} else {
 		if(verb == "!!"){
 			// Repeat the last command.
@@ -85,9 +115,9 @@ void CmdConnection::execCommand(const string cmd){
 			if(m_pipe){
 				oss << "sending shutdown signal: ";
 
-				if(m_pipe->tryWrite("shutdown") > 0){
+				if(m_pipe->write()->tryWrite("shutdown") > 0){
 					oss << "goodnight";
-					m_valid = false;
+					//m_valid = false;
 				} else {
 					oss << "failed";
 				}
@@ -138,7 +168,8 @@ void CmdConnection::execCommand(const string cmd){
 		m_lastCmd = cmd;
 	}
 
-	tryWrite(oss.str());
+	if(oss.str().size())
+		tryWrite(oss.str());
 }
 
 void CmdConnection::DumpDebugStats(stringstream &ss){

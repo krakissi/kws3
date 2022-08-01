@@ -49,6 +49,7 @@ ${OUTDIR}/cmdConnection.o:             \
 		cmdConnection.cc               \
 		${OUTDIR}/util.o               \
 		${OUTDIR}/httpConnection.o     \
+		${OUTDIR}/pipeConnection.o     \
 		${OUTDIR}/connection.o
 	g++ -o ${OUTDIR}/cmdConnection.o -c cmdConnection.cc
 

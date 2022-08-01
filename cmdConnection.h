@@ -8,10 +8,13 @@
 
 #include "connection.h"
 
+#include <list>
+
 class CmdConnection : public Connection {
-	Connection *m_pipe;
+	BiConn *m_pipe;
 
 	std::string m_lastCmd;
+	std::list<std::string> m_pendingError;
 
 public:
 	static struct DebugStats {
@@ -36,7 +39,7 @@ public:
 		delete m_pipe;
 	}
 
-	inline void setPipe(Connection *p){ m_pipe = p; }
+	inline void setPipe(BiConn *bc){ m_pipe = bc; }
 
 	bool receiveCmd();
 	void execCommand(const std::string cmd);

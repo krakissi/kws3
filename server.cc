@@ -54,11 +54,11 @@ bool Kws3::run(){
 
 		// Pipes from child tasks
 		for(auto it = m_pipes.begin(); it != m_pipes.end(); ){
-			PipeConnection *pc = *it;
+			BiConn *bc = *it;
 			bool erase = false;
 			string msg;
 
-			if(pc->nextMsg(msg)){
+			if(((PipeConnection*) bc->read())->nextMsg(msg)){
 				if(msg == "done"){
 					// Child task is done and we can close this pipe.
 					erase = true;
@@ -70,7 +70,7 @@ bool Kws3::run(){
 			if(erase){
 				-- CmdConnection::s_debugStats->m_pipesActive;
 				it = m_pipes.erase(it);
-				delete pc;
+				delete bc;
 			} else {
 				++ it;
 			}
@@ -81,24 +81,32 @@ bool Kws3::run(){
 			CmdConnection conn;
 
 			if(m_cmd_listener.accept(conn) >= 0){
-				int pipe_fd[2];
+				int fd_east[2], fd_west[2];
 				bool havePipes = false;
 				pid_t pid;
 
-				if(!pipe2(pipe_fd, (O_NONBLOCK | O_DIRECT))){
-					// Configure pipes to allow the child process to write back commands to this server.
-					havePipes = true;
+				if(!pipe2(fd_east, (O_NONBLOCK | O_DIRECT))){
+					if(!pipe2(fd_west, (O_NONBLOCK | O_DIRECT))){
+						havePipes = true;
+					} else {
+						// Failed to open both pipes, so abandon plumbing altogether.
+						close(fd_east[0]);
+						close(fd_east[1]);
+					}
 				}
 
 				if(!(pid = fork())){
 					// Child task
 					if(havePipes){
-						PipeConnection *pc = new PipeConnection();
+						BiConn *bc = new BiConn(
+							new PipeConnection(fd_west[0], false),
+							new PipeConnection(fd_east[1], true)
+						);
 
-						pc->fd(pipe_fd[1]);
-						close(pipe_fd[0]);
+						close(fd_east[0]);
+						close(fd_west[1]);
 
-						conn.setPipe(pc);
+						conn.setPipe(bc);
 					}
 
 					conn.tryWrite("hello\n");
@@ -108,21 +116,21 @@ bool Kws3::run(){
 				} else if(pid > 0){
 					// Parent task
 					if(havePipes){
-						PipeConnection *pc = new PipeConnection();
+						BiConn *bc = new BiConn(
+							new PipeConnection(fd_east[0], false),
+							new PipeConnection(fd_west[1], true)
+						);
 
-						// Plumb to the read side of the pipe.
-						pc->fd(pipe_fd[0]);
+						close(fd_west[0]);
+						close(fd_east[1]);
 
-						// Close write side of the pipe.
-						close(pipe_fd[1]);
-
-						m_pipes.push_back(pc);
+						m_pipes.push_back(bc);
 						++ CmdConnection::s_debugStats->m_pipesActive;
 					}
 				} else {
 					if(havePipes){
-						close(pipe_fd[0]);
-						close(pipe_fd[1]);
+						close(fd_east[0]);
+						close(fd_east[1]);
 					}
 				}
 

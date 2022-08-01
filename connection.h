@@ -52,4 +52,24 @@ public:
 	virtual inline bool valid() const { return m_valid; }
 };
 
+// Two unidirectional connections forming a single bi-directional connection.
+class BiConn {
+	Connection *m_read, *m_write;
+
+public:
+
+	BiConn(Connection *read, Connection *write) :
+		m_read(read),
+		m_write(write)
+	{}
+
+	~BiConn(){
+		delete m_read;
+		delete m_write;
+	}
+
+	inline Connection *write(){ return m_write; }
+	inline Connection *read(){ return m_read; }
+};
+
 #endif
