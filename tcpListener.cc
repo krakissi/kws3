@@ -15,7 +15,7 @@ void TcpListener::cleanup(){
 }
 
 bool TcpListener::init(){
-	if((m_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1){
+	if((m_fd = socket(AF_INET, (SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC), 0)) == -1){
 		m_error = 1;
 		return false;
 	}
