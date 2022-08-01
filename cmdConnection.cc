@@ -148,8 +148,13 @@ void CmdConnection::execCommand(const string cmd){
 			}
 		} else if(verb == "echo"){
 			// Echo the command back
-			if(sss.str().size() > verb.size() + 1)
-				oss << "-> " << sss.str().substr(verb.size() + 1) << endl;
+			size_t p = sss.str().find(verb), n;
+
+			if(p != string::npos)
+				n = (p + verb.size() + 1);
+
+			if(sss.str().size() > n)
+				oss << "-> " << sss.str().substr(n) << endl;
 
 		} else if(verb == "show"){
 			string what;
