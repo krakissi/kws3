@@ -115,6 +115,17 @@ void HttpConnection::receiveRequest(){
 }
 
 void HttpConnection::echoRequest(){
+	stringstream ss;
+	string msg = m_sockstream.str();
+
+	ss << m_version << " 200 OK\r\n"
+		<< "Connection: close\r\n"
+		<< "Content-Type: text/plain; charset=utf-8\r\n"
+		<< "Content-Length: " << msg.size() << "\r\n"
+		<< "kws3-uri: " << m_uri << "\r\n"
+		<< "\r\n";
+
+	tryWrite(ss.str());
 	tryWrite(m_sockstream.str());
 }
 
