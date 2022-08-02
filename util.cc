@@ -7,17 +7,13 @@
 
 using namespace std;
 
-void chomp(string &str){
-	size_t p = str.find('\r');
+string chomp(const string &str){
+	size_t p = str.find_first_of("\r\n");
 
-	if(p != string::npos){
-		str[p] = 0;
-	} else {
-		p = str.find('\n');
+	if(p != string::npos)
+		return str.substr(0, p);
 
-		if(p != string::npos)
-			str[p] = 0;
-	}
+	return str;
 }
 
 string trim(const string &str){

@@ -9,7 +9,7 @@
 #include <string>
 
 // If a string contains \r or \n, replace the first instance of either with 0 (null-terminator).
-void chomp(std::string &str);
+std::string chomp(const std::string &str);
 
 // Leading and trailing spaces are removed.
 std::string trim(const std::string &str);

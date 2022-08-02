@@ -34,7 +34,7 @@ void HttpConnection::parseHeaders(){
 
 	// Parse the first line, which indicates request method, URI, and protocol version.
 	if(getline(ss, line)){
-		chomp(line);
+		line = chomp(line);
 		stringstream sss(line);
 
 		string method;
@@ -75,7 +75,7 @@ void HttpConnection::parseHeaders(){
 		if(line.empty() || (line[0] == '\r'))
 			break;
 
-		chomp(line);
+		line = chomp(line);
 
 		// Parse the rest of the headers.
 		size_t p = line.find(':');
