@@ -80,7 +80,7 @@ void HttpConnection::parseHeaders(){
 		// Parse the rest of the headers.
 		size_t p = line.find(':');
 
-		if((p == 0) || (p == string::npos) || (p == line.size() - 2)){
+		if((p == 0) || (p == string::npos) || (p == line.size() - 1)){
 			++ s_debugStats->m_invalidRequest;
 			++ s_debugStats->m_invalidRequestHeaders;
 
