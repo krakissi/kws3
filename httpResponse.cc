@@ -18,7 +18,7 @@ void HttpResponse::status(stringstream& ss) const {
 void HttpResponse::send(){
 	stringstream ss;
 
-	// HTTP/1.1 200 OK
+	// Stream in status line, e.g.: HTTP/1.1 200 OK
 	status(ss);
 
 	string body = m_body.str();
@@ -32,12 +32,14 @@ void HttpResponse::send(){
 		ss << "Content-Type: text/plain; charset=utf-8\r\n";
 	}
 
-	// End of Headers
+	// End of headers.
 	ss << "\r\n";
 
+	// Append body.
 	if(body.size())
 		ss << body;
 
+	// Send message.
 	m_conn->tryWrite(ss.str());
 	++ s_debugStats->m_rspSent;
 }
