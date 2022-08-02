@@ -176,14 +176,5 @@ void HttpConnection::DumpDebugStats(stringstream &ss){
 		<< "|               m_numMethodPost: " << s_debugStats->m_numMethodPost << endl
 		<< "+" << endl;
 }
-
-void HttpConnection::InitStats(){
-	s_debugStats = (DebugStats*) mmap(NULL, sizeof(DebugStats), (PROT_READ | PROT_WRITE), (MAP_SHARED | MAP_ANONYMOUS), -1, 0);
-}
-
-void HttpConnection::UninitStats(){
-	if(s_debugStats)
-		munmap(s_debugStats, sizeof(DebugStats));
-
-	s_debugStats = nullptr;
-}
+KWS3_SHMEM_STAT_INIT   (HttpConnection)
+KWS3_SHMEM_STAT_UNINIT (HttpConnection)

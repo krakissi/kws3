@@ -67,12 +67,8 @@ public:
 	// Respond to incoming request with exactly what we have received so far.
 	void echoRequest();
 
-	// Write debug stat data to the provided stream.
-	static void DumpDebugStats(std::stringstream &ss);
-
-	// Manage shared memory for the stat table.
-	static void InitStats();
-	static void UninitStats();
+	// Static function prototypes for shared memory stat tables.
+	#include "shmemStat.h"
 };
 
 #endif

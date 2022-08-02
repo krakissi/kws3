@@ -21,6 +21,7 @@ void Kws3::init(){
 
 	HttpConnection::InitStats();
 	CmdConnection::InitStats();
+	HttpResponse::InitStats();
 }
 
 void Kws3::cleanup(){
@@ -34,6 +35,7 @@ void Kws3::cleanup(){
 
 	HttpConnection::UninitStats();
 	CmdConnection::UninitStats();
+	HttpResponse::UninitStats();
 }
 
 bool Kws3::valid() const {

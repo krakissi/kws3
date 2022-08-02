@@ -5,7 +5,11 @@
 
 #include "httpResponse.h"
 
+#include <sys/mman.h>
+
 using namespace std;
+
+HttpResponse::DebugStats *HttpResponse::s_debugStats = nullptr;
 
 void HttpResponse::status(stringstream& ss) const {
 	ss << m_version << " " << m_code << " " << m_msg << "\r\n";
@@ -33,5 +37,18 @@ void HttpResponse::send(){
 		ss << body;
 
 	m_conn->tryWrite(ss.str());
+	++ s_debugStats->m_rspSent;
 }
 
+
+void HttpResponse::DumpDebugStats(stringstream &ss){
+	ss << "+ HttpResponse DebugStats" << endl
+		<< "| m_rspCreated: " << s_debugStats->m_rspCreated << endl
+		<< "|    m_rspSent: " << s_debugStats->m_rspSent << endl
+		<< "|" << endl
+		<< "| m_rspCode200: " << s_debugStats->m_rspCode200 << endl
+		<< "| m_rspCode400: " << s_debugStats->m_rspCode400 << endl
+		<< "+" << endl;
+}
+KWS3_SHMEM_STAT_INIT   (HttpResponse)
+KWS3_SHMEM_STAT_UNINIT (HttpResponse)

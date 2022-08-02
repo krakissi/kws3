@@ -44,12 +44,8 @@ public:
 	bool receiveCmd();
 	void execCommand(const std::string cmd);
 
-	// Write debug stat data to the provided stream.
-	static void DumpDebugStats(std::stringstream &ss);
-
-	// Manage shared memory for the stat table.
-	static void InitStats();
-	static void UninitStats();
+	// Static function prototypes for shared memory stat tables.
+	#include "shmemStat.h"
 };
 
 #endif

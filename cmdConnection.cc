@@ -169,13 +169,15 @@ void CmdConnection::execCommand(const string cmd){
 
 					if(!sss){
 						oss << "show which stat table?" << endl;
-						oss << "  try: HttpConnection CmdConnection" << endl;
+						oss << "  try: CmdConnection HttpConnection HttpResponse" << endl;
 					} else {
-						if(table == "HttpConnection"){
-							HttpConnection::DumpDebugStats(oss);
-						} else if(table == "CmdConnection"){
+						if(table == "CmdConnection"){
 							CmdConnection::DumpDebugStats(oss);
-						} else {
+						} else if(table == "HttpConnection"){
+							HttpConnection::DumpDebugStats(oss);
+						} else if(table == "HttpResponse"){
+							HttpResponse::DumpDebugStats(oss);
+						}  else {
 							oss << "show: unknown stat table \"" << table << "\"" << endl;
 						}
 					}
@@ -203,14 +205,5 @@ void CmdConnection::DumpDebugStats(stringstream &ss){
 		<< "| m_pipesActive: " << s_debugStats->m_pipesActive << endl
 		<< "+" << endl;
 }
-
-void CmdConnection::InitStats(){
-	s_debugStats = (DebugStats*) mmap(NULL, sizeof(DebugStats), (PROT_READ | PROT_WRITE), (MAP_SHARED | MAP_ANONYMOUS), -1, 0);
-}
-
-void CmdConnection::UninitStats(){
-	if(s_debugStats)
-		munmap(s_debugStats, sizeof(DebugStats));
-
-	s_debugStats = nullptr;
-}
+KWS3_SHMEM_STAT_INIT   (CmdConnection)
+KWS3_SHMEM_STAT_UNINIT (CmdConnection)

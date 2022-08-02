@@ -34,6 +34,7 @@ ${OUTDIR}/tcpListener.o:               \
 ${OUTDIR}/httpConnection.o:            \
 		httpConnection.h               \
 		httpConnection.cc              \
+		shmemStat.h                    \
 		${OUTDIR}/util.o               \
 		${OUTDIR}/httpResponse.o       \
 		${OUTDIR}/connection.o
@@ -42,6 +43,7 @@ ${OUTDIR}/httpConnection.o:            \
 ${OUTDIR}/httpResponse.o:              \
 		httpResponse.h                 \
 		httpResponse.cc                \
+		shmemStat.h                    \
 		${OUTDIR}/connection.o
 	g++ -o ${OUTDIR}/httpResponse.o -c httpResponse.cc
 
@@ -54,6 +56,7 @@ ${OUTDIR}/pipeConnection.o:            \
 ${OUTDIR}/cmdConnection.o:             \
 		cmdConnection.h                \
 		cmdConnection.cc               \
+		shmemStat.h                    \
 		${OUTDIR}/httpConnection.o     \
 		${OUTDIR}/pipeConnection.o     \
 		${OUTDIR}/connection.o
