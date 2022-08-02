@@ -28,9 +28,11 @@ size_t HttpConnection::sizeofHeaders(){
 	return (m_headersize = 0);
 }
 
-void HttpConnection::parseHeaders(){
+HttpResponse* HttpConnection::parseHeaders(){
 	stringstream ss(m_sockstream.str());
 	string line;
+
+	m_valid = false;
 
 	// Parse the first line, which indicates request method, URI, and protocol version.
 	if(getline(ss, line)){
@@ -44,8 +46,8 @@ void HttpConnection::parseHeaders(){
 		if(!sss){
 			++ s_debugStats->m_invalidRequest;
 			++ s_debugStats->m_invalidRequestBadFirstLine;
-			m_valid = false;
-			return;
+
+			return nullptr;
 		}
 
 		if(method == "HEAD"){
@@ -64,9 +66,8 @@ void HttpConnection::parseHeaders(){
 			++ s_debugStats->m_invalidRequest;
 			++ s_debugStats->m_invalidRequestMethodNotImpl;
 
-			// TODO Return method not implemented
-			m_valid = false;
-			return;
+			// TODO Respond method not implemented
+			return nullptr;
 		}
 	}
 
@@ -84,9 +85,7 @@ void HttpConnection::parseHeaders(){
 			++ s_debugStats->m_invalidRequest;
 			++ s_debugStats->m_invalidRequestHeaders;
 
-			// TODO Return 4xx invalid request
-			m_valid = false;
-			return;
+			return new RspBadRequest(this, m_version);
 		}
 
 		string k = trim(line.substr(0, p));
@@ -96,9 +95,7 @@ void HttpConnection::parseHeaders(){
 			++ s_debugStats->m_invalidRequest;
 			++ s_debugStats->m_invalidRequestHeaders;
 
-			// TODO Return 4xx invalid request
-			m_valid = false;
-			return;
+			return new RspBadRequest(this, m_version);
 		}
 
 		// FIXME - error for repeated headers?
@@ -107,6 +104,8 @@ void HttpConnection::parseHeaders(){
 
 	++ s_debugStats->m_validRequest;
 	m_valid = true;
+
+	return nullptr;
 }
 
 void HttpConnection::receiveRequest(){
@@ -132,7 +131,19 @@ void HttpConnection::receiveRequest(){
 
 	if(m_headersize){
 		// Possibly a valid request, let's try to parse it.
-		parseHeaders();
+		HttpResponse *rsp = parseHeaders();
+
+		if(rsp){
+			// Send the response, we are done.
+			rsp->send();
+			delete rsp;
+		} else if(m_valid){
+			// Valid request, needs further processing
+
+			// FIXME debug
+			// Echo back if we parsed a request.
+			echoRequest();
+		}
 	} else {
 		++ s_debugStats->m_invalidRequest;
 		++ s_debugStats->m_invalidRequestIncomplete;
@@ -140,20 +151,14 @@ void HttpConnection::receiveRequest(){
 }
 
 void HttpConnection::echoRequest(){
-	stringstream ss;
+	HttpResponse *rsp = new RspOk(this, m_version);
 	string msg = m_sockstream.str();
 
-	ss << m_version << " 200 OK\r\n"
-		<< "Connection: close\r\n"
-		<< "Content-Type: text/plain; charset=utf-8\r\n"
-		<< "Content-Length: " << msg.size() << "\r\n"
-		<< "kws3-uri: " << m_uri << "\r\n"
-		<< "\r\n";
-
 	for(auto kv : m_headers)
-		ss << "[" << kv.first << "=" << kv.second << "]\r\n";
+		rsp->body() << "[" << kv.first << "=" << kv.second << "]\r\n";
 
-	tryWrite(ss.str());
+	rsp->send();
+	delete rsp;
 }
 
 void HttpConnection::DumpDebugStats(stringstream &ss){

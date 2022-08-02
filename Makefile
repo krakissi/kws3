@@ -35,8 +35,15 @@ ${OUTDIR}/httpConnection.o:            \
 		httpConnection.h               \
 		httpConnection.cc              \
 		${OUTDIR}/util.o               \
+		${OUTDIR}/httpResponse.o       \
 		${OUTDIR}/connection.o
 	g++ -o ${OUTDIR}/httpConnection.o -c httpConnection.cc
+
+${OUTDIR}/httpResponse.o:              \
+		httpResponse.h                 \
+		httpResponse.cc                \
+		${OUTDIR}/connection.o
+	g++ -o ${OUTDIR}/httpResponse.o -c httpResponse.cc
 
 ${OUTDIR}/pipeConnection.o:            \
 		pipeConnection.h               \

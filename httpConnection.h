@@ -10,9 +10,9 @@
 #include <unordered_map>
 
 #include "connection.h"
+#include "httpResponse.h"
 
 class HttpConnection : public Connection {
-
 	enum RequestMethod {
 		HTTP_METHOD_UNSET,
 		HTTP_METHOD_HEAD,
@@ -28,13 +28,13 @@ class HttpConnection : public Connection {
 
 	std::string m_body;
 
-
 	// Returns the size in bytes of the received HTTP header, if one could be
 	// parsed from the buf. Otherwise returns 0.
 	size_t sizeofHeaders();
 
-	// Read headers from a string buffer.
-	void parseHeaders();
+	// Read headers from a string buffer. Return a response if one should be
+	// sent immediately.
+	HttpResponse* parseHeaders();
 
 public:
 	static struct DebugStats {
@@ -57,7 +57,8 @@ public:
 
 	HttpConnection() :
 		m_headersize(0),
-		m_method(HTTP_METHOD_UNSET)
+		m_method(HTTP_METHOD_UNSET),
+		m_version("HTTP/1.1")
 	{}
 
 	// Read from the socket and look for an incoming HTTP request.

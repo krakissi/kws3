@@ -152,10 +152,6 @@ bool Kws3::run(){
 					// Read from socket, look for incoming HTTP request.
 					conn.receiveRequest();
 
-					// Echo back if we parsed a request.
-					if(conn.valid())
-						conn.echoRequest();
-
 					return false;
 				}
 
