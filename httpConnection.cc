@@ -78,6 +78,31 @@ void HttpConnection::parseHeaders(){
 		chomp(line);
 
 		// Parse the rest of the headers.
+		size_t p = line.find(':');
+
+		if((p == 0) || (p == string::npos) || (p == line.size() - 2)){
+			++ s_debugStats->m_invalidRequest;
+			++ s_debugStats->m_invalidRequestHeaders;
+
+			// TODO Return 4xx invalid request
+			m_valid = false;
+			return;
+		}
+
+		string k = trim(line.substr(0, p));
+		string v = trim(line.substr(p + 1));
+
+		if(k.empty() || v.empty()){
+			++ s_debugStats->m_invalidRequest;
+			++ s_debugStats->m_invalidRequestHeaders;
+
+			// TODO Return 4xx invalid request
+			m_valid = false;
+			return;
+		}
+
+		// FIXME - error for repeated headers?
+		m_headers[k] = v;
 	}
 
 	++ s_debugStats->m_validRequest;
@@ -125,8 +150,10 @@ void HttpConnection::echoRequest(){
 		<< "kws3-uri: " << m_uri << "\r\n"
 		<< "\r\n";
 
+	for(auto kv : m_headers)
+		ss << "[" << kv.first << "=" << kv.second << "]\r\n";
+
 	tryWrite(ss.str());
-	tryWrite(m_sockstream.str());
 }
 
 void HttpConnection::DumpDebugStats(stringstream &ss){
@@ -137,6 +164,7 @@ void HttpConnection::DumpDebugStats(stringstream &ss){
 		<< "|  m_invalidRequestBadFirstLine: " << s_debugStats->m_invalidRequestBadFirstLine << endl
 		<< "| m_invalidRequestMethodNotImpl: " << s_debugStats->m_invalidRequestMethodNotImpl << endl
 		<< "|    m_invalidRequestIncomplete: " << s_debugStats->m_invalidRequestIncomplete << endl
+		<< "}       m_invalidRequestHeaders: " << s_debugStats->m_invalidRequestHeaders << endl
 		<< "|" << endl
 		<< "|               m_numMethodHead: " << s_debugStats->m_numMethodHead << endl
 		<< "|                m_numMethodGet: " << s_debugStats->m_numMethodGet << endl

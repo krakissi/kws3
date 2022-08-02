@@ -45,6 +45,7 @@ public:
 			m_invalidRequestBadFirstLine,
 			m_invalidRequestMethodNotImpl,
 			m_invalidRequestIncomplete,
+			m_invalidRequestHeaders,
 
 			m_numMethodHead,
 			m_numMethodGet,
