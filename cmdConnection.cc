@@ -10,7 +10,6 @@
 #include <unistd.h>
 #include <sys/mman.h>
 
-#include "util.h"
 #include "httpConnection.h"
 #include "pipeConnection.h"
 
