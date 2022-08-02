@@ -27,8 +27,10 @@ void HttpResponse::send(){
 	ss << "Server: kws3\r\n";
 	ss << "Content-Length: " << body.size() << "\r\n";
 
-	// FIXME debug - TODO replace with correct mime type
-	ss << "Content-Type: text/plain; charset=utf-8\r\n";
+	if(body.size()){
+		// FIXME debug - TODO replace with correct mime type
+		ss << "Content-Type: text/plain; charset=utf-8\r\n";
+	}
 
 	// End of Headers
 	ss << "\r\n";
@@ -48,6 +50,7 @@ void HttpResponse::DumpDebugStats(stringstream &ss){
 		<< "|" << endl
 		<< "| m_rspCode200: " << s_debugStats->m_rspCode200 << endl
 		<< "| m_rspCode400: " << s_debugStats->m_rspCode400 << endl
+		<< "| m_rspCode501: " << s_debugStats->m_rspCode501 << endl
 		<< "+" << endl;
 }
 KWS3_SHMEM_STAT_INIT   (HttpResponse)

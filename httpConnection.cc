@@ -66,8 +66,7 @@ HttpResponse* HttpConnection::parseHeaders(){
 			++ s_debugStats->m_invalidRequest;
 			++ s_debugStats->m_invalidRequestMethodNotImpl;
 
-			// TODO Respond method not implemented
-			return nullptr;
+			return new RspNotImplemented(this, m_version);
 		}
 	}
 
@@ -98,8 +97,19 @@ HttpResponse* HttpConnection::parseHeaders(){
 			return new RspBadRequest(this, m_version);
 		}
 
-		// FIXME - error for repeated headers?
-		m_headers[k] = v;
+		// Set or concat headers
+		{
+			// TODO - instead of producing a comma-separated list like this,
+			// maybe store the heads in a map of lists?
+			string ev = m_headers[k];
+
+			if(!ev.empty())
+				ev += string(", ") + v;
+			else
+				ev = v;
+
+			m_headers[k] = ev;
+		}
 	}
 
 	++ s_debugStats->m_validRequest;

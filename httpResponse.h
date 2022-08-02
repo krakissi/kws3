@@ -27,6 +27,7 @@ public:
 
 			m_rspCode200,
 			m_rspCode400,
+			m_rspCode501,
 
 			m_lastone;
 
@@ -68,6 +69,16 @@ public:
 		HttpResponse(conn, version, 400, "Bad Request")
 	{
 		++ s_debugStats->m_rspCode400;
+	}
+};
+
+// 501 Not Implemented
+class RspNotImplemented : public HttpResponse {
+public:
+	RspNotImplemented(Connection *conn, const std::string &version) :
+		HttpResponse(conn, version, 501, "Not Implemented")
+	{
+		++ s_debugStats->m_rspCode501;
 	}
 };
 
