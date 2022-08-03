@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <sys/mman.h>
 
+#include "util.h"
 #include "httpConnection.h"
 #include "pipeConnection.h"
 
@@ -32,6 +33,15 @@ size_t findFirstOf(string needles, const string &str){
 }
 
 CmdConnection::DebugStats *CmdConnection::s_debugStats = nullptr;
+
+void CmdConnection::getCrumbs(stringstream &ss, const char sep){
+	for(const auto &s : m_configPath){
+		if(s.empty())
+			break;
+
+		ss << s << sep;
+	}
+}
 
 bool CmdConnection::receiveMsg(){
 	if(!m_pipe)
@@ -77,6 +87,7 @@ bool CmdConnection::receiveCmd(){
 	} else {
 		// Cannot configure if pipe to the main task it broken.
 		if(m_configMode){
+			clearCrumbs();
 			m_configMode = false;
 			m_pendingError.push_front(ERR_REMOTE_CLOSED);
 		}
@@ -96,7 +107,10 @@ bool CmdConnection::receiveCmd(){
 	if(m_sockstream.str().empty()){
 		stringstream css;
 
-		css << endl << (m_pipe ? "" : "(d/c)") << (m_configMode ? "# " : "> ");
+		if(m_configMode)
+			getCrumbs(css, '/');
+
+		css << (m_pipe ? "" : " (d/c)") << (m_configMode ? "# " : "> ");
 		tryWrite(css.str());
 	}
 
@@ -137,7 +151,18 @@ bool CmdConnection::receiveCmd(){
 
 	// Execute either config or command statement.
 	if(m_configMode){
-		execConfig(cmd);
+		stringstream css;
+
+		cmd = trim(cmd);
+
+		// Top works at all config levels to return to the root, so drop the path.
+		if(cmd != "top"){
+			// For nested configuration elements, insert the path into the command.
+			getCrumbs(css, ' ');
+		}
+
+		css << cmd;
+		execConfig(css.str());
 	} else execCommand(cmd);
 
 	// True to continue processing commands.
@@ -242,12 +267,40 @@ void CmdConnection::execCommand(const string &cmd){
 }
 
 void CmdConnection::execConfig(const std::string &cmd){
-	// TODO - send config to main task.
+	stringstream sss(cmd), oss;
+	string verb;
 
+	int configLevel = 0;
 
-	if(cmd == "end"){
-		m_configMode = false;
+	sss >> verb;
+	if(!sss){
+		return;
+	} else {
+		if(verb == "end"){
+			clearCrumbs();
+			m_configMode = false;
+			oss << "exiting config mode." << endl;
+		} else if(verb == "top"){
+			clearCrumbs();
+		} else if(verb == "http"){
+			int port;
+
+			sss >> port;
+
+			if(!sss){
+				oss << "usage: http [port (" << 0x0001 << "-" << 0xFFFF << ")" << endl;
+			} else {
+				// Store breadcrumbs.
+				m_configPath[configLevel++] = verb;
+				m_configPath[configLevel++] = to_string(port);
+			}
+		} else {
+			m_pendingError.push_front("unrecognized config");
+		}
 	}
+
+	if(oss.str().size())
+		tryWrite(oss.str());
 }
 
 void CmdConnection::DumpDebugStats(stringstream &ss){

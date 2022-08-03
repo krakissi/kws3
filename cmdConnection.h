@@ -9,15 +9,20 @@
 #include "connection.h"
 
 #include <list>
+#include <vector>
 
 class CmdConnection : public Connection {
 	BiConn *m_pipe;
 
+	std::vector<std::string> m_configPath;
 	std::string m_lastCmd;
 	std::list<std::string> m_pendingError;
 
 	bool m_configMode;
 	bool m_expectingMsg;
+
+	inline void clearCrumbs() { for(auto &s : m_configPath) s = ""; }
+	inline void getCrumbs(std::stringstream &ss, const char sep);
 
 	void execCommand(const std::string &cmd);
 	void execConfig(const std::string &cmd);
@@ -40,6 +45,7 @@ public:
 
 	CmdConnection() :
 		m_pipe(nullptr),
+		m_configPath(10 /* Hopefully no more than 10 nested levels of config */),
 		m_configMode(false),
 		m_expectingMsg(false)
 	{

@@ -57,6 +57,7 @@ ${OUTDIR}/cmdConnection.o:             \
 		cmdConnection.h                \
 		cmdConnection.cc               \
 		shmemStat.h                    \
+		${OUTDIR}/util.o               \
 		${OUTDIR}/httpConnection.o     \
 		${OUTDIR}/pipeConnection.o     \
 		${OUTDIR}/connection.o
