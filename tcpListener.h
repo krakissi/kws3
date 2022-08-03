@@ -36,6 +36,9 @@ public:
 	// True if the socket was actually opened and can be used.
 	inline bool valid() const override { return (m_error == 0); }
 
+	// Return the port number we are listening on.
+	inline int port() const { return ntohs(m_addr.sin_port); }
+
 	// Blocks until a new connection opens, returns file descriptor.
 	int accept(Connection &conn) const;
 };

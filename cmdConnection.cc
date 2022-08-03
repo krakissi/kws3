@@ -51,11 +51,24 @@ bool CmdConnection::receiveMsg(){
 
 	if(((PipeConnection*) m_pipe->read())->nextMsg(msg)){
 		if(msg == "done"){
-			m_pendingError.push_front(ERR_REMOTE_CLOSED);
+			m_pendingMessages.push_front(ERR_REMOTE_CLOSED);
 			m_pipe = nullptr;
 
 			// Send bell to indicate a pending error message.
 			tryWrite("\a");
+		} else {
+			stringstream mss(msg);
+			string verb;
+
+			mss >> verb;
+			if(!!mss){
+				if(verb == "http"){
+					// Receive HTTP listener config information.
+
+					// FIXME debug
+					m_pendingMessages.push_front(msg);
+				}
+			}
 		}
 
 		// Received a message, stop retrying.
@@ -75,30 +88,30 @@ bool CmdConnection::receiveCmd(){
 		// see if it does.
 		if(m_expectingMsg){
 			for(int i = 0; i < 12; ++ i){
-				if(!receiveMsg()){
-					m_expectingMsg = false;
+				if(!receiveMsg())
 					break;
-				}
 
 				// 12 * 250000 = 3000000 us = 3 seconds
 				usleep(250000);
 			}
+
+			m_expectingMsg = false;
 		}
 	} else {
 		// Cannot configure if pipe to the main task it broken.
 		if(m_configMode){
 			clearCrumbs();
 			m_configMode = false;
-			m_pendingError.push_front(ERR_REMOTE_CLOSED);
+			m_pendingMessages.push_front(ERR_REMOTE_CLOSED);
 		}
 	}
 
 	// Write out and pending error messages before the next command prompt.
-	while(m_pendingError.size()){
+	while(m_pendingMessages.size()){
 		stringstream ess;
 
-		ess << "err: " << m_pendingError.front() << endl;
-		m_pendingError.pop_front();
+		ess << "-> " << m_pendingMessages.front() << endl;
+		m_pendingMessages.pop_front();
 
 		tryWrite(ess.str());
 	}
@@ -107,10 +120,12 @@ bool CmdConnection::receiveCmd(){
 	if(m_sockstream.str().empty()){
 		stringstream css;
 
-		if(m_configMode)
+		if(m_configMode){
+			css << "/";
 			getCrumbs(css, '/');
+		}
 
-		css << (m_pipe ? "" : " (d/c)") << (m_configMode ? "# " : "> ");
+		css << (m_pipe ? "" : "(d/c)") << (m_configMode ? "# " : "> ");
 		tryWrite(css.str());
 	}
 
@@ -182,7 +197,7 @@ void CmdConnection::execCommand(const string &cmd){
 
 	sss >> verb;
 	if(!sss){
-		if(m_pendingError.size() == 0)
+		if(m_pendingMessages.size() == 0)
 			oss << "?" << endl;
 	} else {
 		if(verb == "!!"){
@@ -220,7 +235,7 @@ void CmdConnection::execCommand(const string &cmd){
 				n = (p + verb.size() + 1);
 
 			if(sss.str().size() > n)
-				oss << "-> " << sss.str().substr(n) << endl;
+				m_pendingMessages.push_front(sss.str().substr(n));
 
 		} else if(verb == "show"){
 			string what;
@@ -291,15 +306,18 @@ void CmdConnection::execConfig(const std::string &cmd){
 
 			sss >> port;
 
+
 			if(!sss){
-				oss << "usage: http [port (" << 0x0001 << "-" << 0xFFFF << ")" << endl;
+				// Request info http listeners.
+				((PipeConnection*) m_pipe->write())->tryWrite("get http");
+				m_expectingMsg = true;
 			} else {
 				// Store breadcrumbs.
 				m_configPath[configLevel++] = verb;
 				m_configPath[configLevel++] = to_string(port);
 			}
 		} else {
-			m_pendingError.push_front("unrecognized config");
+			m_pendingMessages.push_front("unrecognized config");
 		}
 	}
 

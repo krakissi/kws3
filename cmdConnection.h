@@ -16,7 +16,7 @@ class CmdConnection : public Connection {
 
 	std::vector<std::string> m_configPath;
 	std::string m_lastCmd;
-	std::list<std::string> m_pendingError;
+	std::list<std::string> m_pendingMessages;
 
 	bool m_configMode;
 	bool m_expectingMsg;

@@ -16,6 +16,9 @@
 using namespace std;
 
 void Kws3::init(){
+	// FIXME debug
+	m_http_listeners.push_back(new TcpListener(9005));
+
 	HttpConnection::InitStats();
 	CmdConnection::InitStats();
 	HttpResponse::InitStats();
@@ -68,6 +71,39 @@ bool Kws3::run(){
 				} else if(msg == "shutdown"){
 					bc->write()->tryWrite("done");
 					return false;
+				} else {
+					stringstream mss(msg);
+					string verb;
+
+					mss >> verb;
+					if(!!mss){
+						if(verb == "get"){
+							string what;
+
+							mss >> what;
+
+							if(!!mss){
+								if(what == "http"){
+									stringstream cfgss;
+									int port;
+
+									mss >> port;
+									if(!mss){
+										// No port number specified, return a list of listening ports.
+										cfgss << "http ";
+
+										for(auto l : m_http_listeners)
+											cfgss << l->port() << " ";
+									} else {
+										// Port number specified, return full config.
+										// TODO
+									}
+
+									bc->write()->tryWrite(cfgss.str());
+								}
+							}
+						}
+					}
 				}
 			}
 
