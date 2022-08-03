@@ -33,9 +33,54 @@ size_t findFirstOf(string needles, const string &str){
 
 CmdConnection::DebugStats *CmdConnection::s_debugStats = nullptr;
 
+bool CmdConnection::receiveMsg(){
+	if(!m_pipe)
+		return false;
+
+	string msg;
+
+	if(((PipeConnection*) m_pipe->read())->nextMsg(msg)){
+		if(msg == "done"){
+			m_pendingError.push_front(ERR_REMOTE_CLOSED);
+			m_pipe = nullptr;
+
+			// Send bell to indicate a pending error message.
+			tryWrite("\a");
+		}
+
+		// Received a message, stop retrying.
+		return false;
+	}
+
+	// True to try to read again.
+	return true;
+}
+
 bool CmdConnection::receiveCmd(){
 	if(!valid())
 		return false;
+
+	if(m_pipe){
+		// A command was issued which should get a response, wait a while and
+		// see if it does.
+		if(m_expectingMsg){
+			for(int i = 0; i < 12; ++ i){
+				if(!receiveMsg()){
+					m_expectingMsg = false;
+					break;
+				}
+
+				// 12 * 250000 = 3000000 us = 3 seconds
+				usleep(250000);
+			}
+		}
+	} else {
+		// Cannot configure if pipe to the main task it broken.
+		if(m_configMode){
+			m_configMode = false;
+			m_pendingError.push_front(ERR_REMOTE_CLOSED);
+		}
+	}
 
 	// Write out and pending error messages before the next command prompt.
 	while(m_pendingError.size()){
@@ -51,7 +96,7 @@ bool CmdConnection::receiveCmd(){
 	if(m_sockstream.str().empty()){
 		stringstream css;
 
-		css << endl << (m_pipe ? "" : "(d/c)") << "> ";
+		css << endl << (m_pipe ? "" : "(d/c)") << (m_configMode ? "# " : "> ");
 		tryWrite(css.str());
 	}
 
@@ -59,19 +104,8 @@ bool CmdConnection::receiveCmd(){
 
 	int rc;
 	do {
-		if(m_pipe){
-			string msg;
-
-			if(((PipeConnection*) m_pipe->read())->nextMsg(msg)){
-				if(msg == "done"){
-					m_pendingError.push_front("remote closed signal pipe!");
-					m_pipe = nullptr;
-
-					// Send bell to indicate a pending error message.
-					tryWrite("\a");
-				}
-			}
-		}
+		// Check pipe from the main server task for an unexpected message.
+		receiveMsg();
 
 		rc = tryRead();
 
@@ -101,13 +135,16 @@ bool CmdConnection::receiveCmd(){
 		cmd = cmd.substr(0, p);
 	}
 
-	execCommand(cmd);
+	// Execute either config or command statement.
+	if(m_configMode){
+		execConfig(cmd);
+	} else execCommand(cmd);
 
-	// 0 is generally a timeout.
+	// True to continue processing commands.
 	return true;
 }
 
-void CmdConnection::execCommand(const string cmd){
+void CmdConnection::execCommand(const string &cmd){
 	++ s_debugStats->m_cmdReceived;
 
 	// Parse command string. It should start with some verb.
@@ -136,6 +173,7 @@ void CmdConnection::execCommand(const string cmd){
 				oss << "sending shutdown signal: ";
 
 				if(m_pipe->write()->tryWrite("shutdown") > 0){
+					m_expectingMsg = true;
 					oss << "goodnight";
 				} else {
 					oss << "failed";
@@ -185,6 +223,11 @@ void CmdConnection::execCommand(const string cmd){
 					oss << "show: unknown item \"" << what << "\"" << endl;
 				}
 			}
+		} else if(verb == "config"){
+			// Enter config mode.
+			m_configMode = true;
+
+			oss << "entering config mode..." << endl;
 		} else {
 			// Display the verb if we didn't understand it.
 			oss << "unknown verb: " << verb << endl;
@@ -196,6 +239,13 @@ void CmdConnection::execCommand(const string cmd){
 
 	if(oss.str().size())
 		tryWrite(oss.str());
+}
+
+void CmdConnection::execConfig(const std::string &cmd){
+	// TODO - send config to main task.
+	if(cmd == "end"){
+		m_configMode = false;
+	}
 }
 
 void CmdConnection::DumpDebugStats(stringstream &ss){

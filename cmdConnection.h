@@ -16,6 +16,16 @@ class CmdConnection : public Connection {
 	std::string m_lastCmd;
 	std::list<std::string> m_pendingError;
 
+	bool m_configMode;
+	bool m_expectingMsg;
+
+	void execCommand(const std::string &cmd);
+	void execConfig(const std::string &cmd);
+
+	bool receiveMsg();
+
+	const std::string ERR_REMOTE_CLOSED = "remote closed signal pipe!";
+
 public:
 	static struct DebugStats {
 		uint64_t
@@ -29,7 +39,9 @@ public:
 
 
 	CmdConnection() :
-		m_pipe(nullptr)
+		m_pipe(nullptr),
+		m_configMode(false),
+		m_expectingMsg(false)
 	{
 		m_valid = true;
 		m_readAgainTimeout = 6000; /* 60 seconds (6000 * 10ms) */
@@ -42,7 +54,7 @@ public:
 	inline void setPipe(BiConn *bc){ m_pipe = bc; }
 
 	bool receiveCmd();
-	void execCommand(const std::string cmd);
+
 
 	// Static function prototypes for shared memory stat tables.
 	#include "shmemStat.h"

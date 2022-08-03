@@ -16,9 +16,6 @@
 using namespace std;
 
 void Kws3::init(){
-	// FIXME debug - create listeners via configuration instead
-	m_http_listeners.push_back(new TcpListener(9005));
-
 	HttpConnection::InitStats();
 	CmdConnection::InitStats();
 	HttpResponse::InitStats();
