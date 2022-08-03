@@ -57,14 +57,23 @@ bool Kws3::run(){
 			bool erase = false;
 			string msg;
 
-			if(((PipeConnection*) bc->read())->nextMsg(msg)){
-				if(msg == "done"){
+			PipeConnection *readPipe = (PipeConnection*) bc->read();
+
+			if(readPipe->nextMsg(msg)){
+				if(msg == "ping"){
+					++ CmdConnection::s_debugStats->m_pipesPingRcvd;
+				} else if(msg == "done"){
 					// Child task is done and we can close this pipe.
 					erase = true;
 				} else if(msg == "shutdown"){
 					bc->write()->tryWrite("done");
 					return false;
 				}
+			}
+
+			if(readPipe->timeout()){
+				++ CmdConnection::s_debugStats->m_pipesTimeout;
+				erase = true;
 			}
 
 			if(erase){

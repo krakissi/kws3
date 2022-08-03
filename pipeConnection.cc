@@ -24,3 +24,17 @@ bool PipeConnection::nextMsg(string &msg){
 
 	return false;
 }
+
+bool PipeConnection::timeout(){
+	if(!m_write){
+		static time_t now;
+
+		time(&now);
+
+		// Five minute timeout.
+		if((now - m_timeLastMsgRecv) > 300)
+			return true;
+	}
+
+	return false;
+}

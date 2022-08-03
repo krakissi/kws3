@@ -10,10 +10,12 @@
 
 class PipeConnection : public Connection {
 	bool m_write;
+	time_t m_timeLastMsgRecv;
 
 public:
 	PipeConnection(int fd, bool isWritePipe) :
-		m_write(isWritePipe)
+		m_write(isWritePipe),
+		m_timeLastMsgRecv(time(NULL))
 	{
 		m_fd = fd;
 	}
@@ -21,6 +23,8 @@ public:
 	virtual int readFailure(int code) override;
 
 	bool nextMsg(std::string &msg);
+
+	bool timeout();
 };
 
 #endif

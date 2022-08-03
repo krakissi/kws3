@@ -165,6 +165,10 @@ bool CmdConnection::receiveCmd(){
 		execConfig(css.str());
 	} else execCommand(cmd);
 
+	// Keep the pipe to the main task alive.
+	((PipeConnection*) m_pipe->write())->tryWrite("ping");
+	++ s_debugStats->m_pipesPingSent;
+
 	// True to continue processing commands.
 	return true;
 }
@@ -305,9 +309,12 @@ void CmdConnection::execConfig(const std::string &cmd){
 
 void CmdConnection::DumpDebugStats(stringstream &ss){
 	ss << "+ CmdConnection DebugStats" << endl
-		<< "| m_cmdReceived: " << s_debugStats->m_cmdReceived << endl
+		<< "|   m_cmdReceived: " << s_debugStats->m_cmdReceived << endl
 		<< "|" << endl
-		<< "| m_pipesActive: " << s_debugStats->m_pipesActive << endl
+		<< "|   m_pipesActive: " << s_debugStats->m_pipesActive << endl
+		<< "|  m_pipesTimeout: " << s_debugStats->m_pipesTimeout << endl
+		<< "| m_pipesPingSent: " << s_debugStats->m_pipesPingSent << endl
+		<< "| m_pipesPingRcvd: " << s_debugStats->m_pipesPingRcvd << endl
 		<< "+" << endl;
 }
 KWS3_SHMEM_STAT_INIT   (CmdConnection)

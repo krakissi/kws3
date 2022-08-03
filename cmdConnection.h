@@ -37,6 +37,9 @@ public:
 			m_cmdReceived,
 
 			m_pipesActive,
+			m_pipesTimeout,
+			m_pipesPingSent,
+			m_pipesPingRcvd,
 
 			m_lastone;
 
