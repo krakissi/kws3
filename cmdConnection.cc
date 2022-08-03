@@ -170,8 +170,8 @@ bool CmdConnection::receiveCmd(){
 
 		cmd = trim(cmd);
 
-		// Top works at all config levels to return to the root, so drop the path.
-		if(cmd != "top"){
+		// Commands that work at all levels don't send the crumbs.
+		if((cmd != "top") && (cmd != "end")){
 			// For nested configuration elements, insert the path into the command.
 			getCrumbs(css, ' ');
 		}
