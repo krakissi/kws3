@@ -30,12 +30,7 @@ ssize_t Connection::tryRead(){
 }
 
 ssize_t Connection::tryWrite(const string &msg) const {
-	ssize_t c = write(m_fd, msg.c_str(), msg.size());
-
-	// Return control to scheduler, might make writes more reliable if the
-	// process is about to be terminated.
-	usleep(0);
-	return c;
+	return write(m_fd, msg.c_str(), msg.size());
 }
 
 int Connection::readFailure(int code){
