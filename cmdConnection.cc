@@ -227,7 +227,7 @@ void CmdConnection::execCommand(const string &cmd){
 			// Enter config mode.
 			m_configMode = true;
 
-			oss << "entering config mode..." << endl;
+			oss << "entering config mode (\"end\" to exit)..." << endl;
 		} else {
 			// Display the verb if we didn't understand it.
 			oss << "unknown verb: " << verb << endl;
@@ -243,6 +243,8 @@ void CmdConnection::execCommand(const string &cmd){
 
 void CmdConnection::execConfig(const std::string &cmd){
 	// TODO - send config to main task.
+
+
 	if(cmd == "end"){
 		m_configMode = false;
 	}
