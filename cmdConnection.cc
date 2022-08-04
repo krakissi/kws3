@@ -62,11 +62,16 @@ bool CmdConnection::receiveMsg(){
 
 			mss >> verb;
 			if(!!mss){
-				if(verb == "http"){
+				if(verb == "http-port"){
 					// Receive HTTP listener config information.
 
 					// FIXME debug
-					m_pendingMessages.push_front(msg);
+					m_pendingMessages.push_front(msg.substr(msg.find("http-port") + string("http-port").size() + 1));
+				} else if(verb == "http-site"){
+					// Receive site config
+
+					// FIXME debug
+					m_pendingMessages.push_front(msg.substr(msg.find("http-site") + string("http-site").size() + 1));
 				}
 			}
 		}
@@ -303,20 +308,49 @@ void CmdConnection::execConfig(const std::string &cmd){
 			oss << "exiting config mode." << endl;
 		} else if(verb == "top"){
 			clearCrumbs();
-		} else if(verb == "http"){
+		} else if(verb == "http-port"){
 			int port;
 
 			sss >> port;
-
-
 			if(!sss){
-				// Request info http listeners.
-				((PipeConnection*) m_pipe->write())->tryWrite("get http");
+				// Get all configured port numbers.
+				((PipeConnection*) m_pipe->write())->tryWrite("get http-port");
 				m_expectingMsg = true;
 			} else {
 				// Store breadcrumbs.
 				m_configPath[configLevel++] = verb;
 				m_configPath[configLevel++] = to_string(port);
+
+				// Get config for this port.
+				{
+					stringstream pss;
+
+					pss << "get http-port " << port;
+					((PipeConnection*) m_pipe->write())->tryWrite(pss.str());
+					m_expectingMsg = true;
+				}
+			}
+		} else if(verb == "http-site"){
+			string name;
+
+			sss >> name;
+			if(!sss){
+				// Get all configured site numbers.
+				((PipeConnection*) m_pipe->write())->tryWrite("get http-site");
+				m_expectingMsg = true;
+			} else {
+				// Store breadcrumbs.
+				m_configPath[configLevel++] = verb;
+				m_configPath[configLevel++] = name;
+
+				// Get config for this site.
+				{
+					stringstream pss;
+
+					pss << "get http-site " << name;
+					((PipeConnection*) m_pipe->write())->tryWrite(pss.str());
+					m_expectingMsg = true;
+				}
 			}
 		} else {
 			m_pendingMessages.push_front("unrecognized config");

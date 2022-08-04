@@ -16,8 +16,17 @@
 using namespace std;
 
 void Kws3::init(){
-	// FIXME debug
-	m_http_listeners.push_back(new TcpListener(9005));
+	// Example configuration.
+	{
+		HttpSite *s = new HttpSite("default");
+		HttpPort *p = new HttpPort(9004);
+
+		m_config.m_sites[s->m_name] = s;
+		m_config.m_ports[p->m_port] = p;
+
+		p->m_siteDefault = s;
+	}
+	applyConfig();
 
 	HttpConnection::InitStats();
 	CmdConnection::InitStats();
@@ -36,6 +45,17 @@ void Kws3::cleanup(){
 	HttpConnection::UninitStats();
 	CmdConnection::UninitStats();
 	HttpResponse::UninitStats();
+}
+
+void Kws3::applyConfig(){
+	// Clear existing listeners.
+	for(auto it = m_http_listeners.begin(); it != m_http_listeners.end(); it = m_http_listeners.erase(it))
+		delete *it;
+
+	for(auto kv : m_config.m_ports){
+		// TODO - how does TcpListener know about site configuration?
+		m_http_listeners.push_back(new TcpListener(kv.first));
+	}
 }
 
 bool Kws3::valid() const {
@@ -81,26 +101,67 @@ bool Kws3::run(){
 							string what;
 
 							mss >> what;
-
 							if(!!mss){
-								if(what == "http"){
-									stringstream cfgss;
-									int port;
+								stringstream cfgss;
 
+								if(what == "http-port"){
+									// HttpPort objects
+									cfgss << "http-port ";
+
+									int port;
 									mss >> port;
 									if(!mss){
 										// No port number specified, return a list of listening ports.
-										cfgss << "http ";
-
-										for(auto l : m_http_listeners)
-											cfgss << l->port() << " ";
+										for(auto kv : m_config.m_ports)
+											cfgss << kv.first << " ";
 									} else {
-										// Port number specified, return full config.
-										// TODO
-									}
+										HttpPort *p;
 
-									bc->write()->tryWrite(cfgss.str());
+										try {
+											p = m_config.m_ports.at(port);
+										} catch(...){
+											m_config.m_ports[port] = p = new HttpPort(port);
+										}
+
+										cfgss << port
+											<< " state:" << p->m_state;
+
+										if(p->m_siteDefault)
+											cfgss << " siteDefault:" << p->m_siteDefault->m_name;
+
+										for(auto site : p->m_sites)
+											cfgss << " site:" << site->m_name;
+									}
+								} else if(what == "http-site"){
+									// HttpSite objects
+									cfgss << "http-site ";
+
+									string name;
+									mss >> name;
+									if(!mss){
+										// No site name specified, return a list of site names.
+										for(auto kv : m_config.m_sites)
+											cfgss << kv.first << " ";
+									} else {
+										HttpSite *s;
+
+										try {
+											s = m_config.m_sites.at(name);
+										} catch(...){
+											m_config.m_sites[name] = s = new HttpSite(name);
+										}
+
+										cfgss << name
+											<< " state:" << s->m_state
+											<< " root:" << s->m_root;
+
+										for(string host : s->m_hosts)
+											cfgss << " host:" << host;
+									}
 								}
+
+								if(cfgss.str().size())
+									bc->write()->tryWrite(cfgss.str());
 							}
 						}
 					}
