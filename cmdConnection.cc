@@ -92,12 +92,13 @@ bool CmdConnection::receiveCmd(){
 		// A command was issued which should get a response, wait a while and
 		// see if it does.
 		if(m_expectingMsg){
-			for(int i = 0; i < 12; ++ i){
+			for(int i = 0; i < 13; ++ i){
 				if(!receiveMsg())
 					break;
 
-				// 12 * 250000 = 3000000 us = 3 seconds
-				usleep(250000);
+				// 12 * 250000 = 3000000 us = 3 seconds timeout
+				// Wait 30ms the first time in case the server gets back quickly, then poll every 250ms.
+				usleep((i == 0) ? 30000 : 250000);
 			}
 
 			m_expectingMsg = false;
