@@ -1,0 +1,9 @@
+http-site <name>
+  hosts a.tld c.b.tld ...           # Hostnames (wildcard allowed)
+  root /path/to/root/               # The document root, where / will begin from.
+top
+
+http-port <number>
+  sites <name> [name2] [name3] ...  # Will attempt to match Host header to sites in the configured order.
+  site-default <name>               # Serve this if the request didn't provide a Host header or the provided header didn't match any that we know about.
+top

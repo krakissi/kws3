@@ -53,7 +53,7 @@ public:
 		m_expectingMsg(false)
 	{
 		m_valid = true;
-		m_readAgainTimeout = 6000; /* 60 seconds (6000 * 10ms) */
+		m_readAgainTimeout = 18000; /* 180 seconds (18000 * 10ms) */
 	}
 
 	~CmdConnection(){

@@ -24,6 +24,7 @@ void Kws3::init(){
 		m_config.m_sites[s->m_name] = s;
 		m_config.m_ports[p->m_port] = p;
 
+		s->m_root = ".";
 		p->m_siteDefault = s;
 	}
 	applyConfig();
