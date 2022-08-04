@@ -171,6 +171,12 @@ bool CmdConnection::receiveCmd(){
 		cmd = cmd.substr(0, p);
 	}
 
+	if(m_pipe){
+		// Keep the pipe to the main task alive.
+		((PipeConnection*) m_pipe->write())->tryWrite("ping");
+		++ s_debugStats->m_pipesPingSent;
+	}
+
 	// Execute either config or command statement.
 	if(m_configMode){
 		stringstream css;
@@ -186,10 +192,6 @@ bool CmdConnection::receiveCmd(){
 		css << cmd;
 		execConfig(css.str());
 	} else execCommand(cmd);
-
-	// Keep the pipe to the main task alive.
-	((PipeConnection*) m_pipe->write())->tryWrite("ping");
-	++ s_debugStats->m_pipesPingSent;
 
 	// True to continue processing commands.
 	return true;
