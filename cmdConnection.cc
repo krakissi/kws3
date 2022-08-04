@@ -142,9 +142,11 @@ bool CmdConnection::receiveCmd(){
 			// Retry
 			continue;
 
-		if(rc == 0)
-			// Complete
+		if(rc == 0){
+			// 0 bytes read is generally a timeout.
+			tryWrite("\a\ntimeout\n");
 			return false;
+		}
 
 	} while(findFirstOf("\n;", m_sockstream.str()) == string::npos);
 
