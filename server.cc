@@ -52,18 +52,43 @@ string Kws3::checkConfig(){
 	stringstream ss;
 
 	for(auto kv : m_config.m_ports){
+		const string prefix = (string("http-port ") + to_string(kv.first) + ": ");
 		HttpPort *p = kv.second;
 
 		if((kv.first > 0xffff) || (kv.first <= 0))
-			ss << "port " << kv.first << ": invalid port number" << endl;
+			ss << prefix << "invalid port number" << endl;
 
 		if(p->m_state){
 			// Sites can be unconfigured if the port is not actually enabled.
 			if(p->m_siteDefault.empty() && (p->m_sites.size() == 0))
-				ss << "port " << kv.first << ": enabled, but no sites configured" << endl;
+				ss << prefix << "enabled, but no sites configured" << endl;
 			else {
-				// Check whether at least one site is enabled on this port.
-				// TODO
+				bool anySiteEnabled = false;
+
+				if(!p->m_siteDefault.empty()){
+					HttpSite *s = nullptr;
+
+					try {
+						s = m_config.m_sites.at(p->m_siteDefault);
+					} catch(...){}
+
+					if(s && s->m_state)
+						anySiteEnabled = true;
+				}
+
+				for(string site : p->m_sites){
+					HttpSite *s = nullptr;
+
+					try {
+						s = m_config.m_sites.at(site);
+					} catch(...){}
+
+					if(s && s->m_state)
+						anySiteEnabled = true;
+				}
+
+				if(!anySiteEnabled)
+					ss << prefix << "enabled, but all sites are disabled" << endl;
 			}
 		}
 	}
