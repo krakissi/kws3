@@ -31,7 +31,8 @@ class Kws3 {
 	void init();
 	void cleanup();
 
-	void applyConfig();
+	std::string checkConfig();
+	int applyConfig();
 
 public:
 

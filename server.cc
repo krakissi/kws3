@@ -25,7 +25,7 @@ void Kws3::init(){
 		m_config.m_ports[p->m_port] = p;
 
 		s->m_root = ".";
-		p->m_siteDefault = s;
+		p->m_siteDefault = s->m_name;
 	}
 	applyConfig();
 
@@ -48,15 +48,43 @@ void Kws3::cleanup(){
 	HttpResponse::UninitStats();
 }
 
-void Kws3::applyConfig(){
+string Kws3::checkConfig(){
+	stringstream ss;
+
+	for(auto kv : m_config.m_ports){
+		HttpPort *p = kv.second;
+
+		if((kv.first > 0xffff) || (kv.first <= 0))
+			ss << "port " << kv.first << ": invalid port number" << endl;
+
+		if(p->m_state){
+			// Sites can be unconfigured if the port is not actually enabled.
+			if(p->m_siteDefault.empty() && (p->m_sites.size() == 0))
+				ss << "port " << kv.first << ": enabled, but no sites configured" << endl;
+			else {
+				// Check whether at least one site is enabled on this port.
+				// TODO
+			}
+		}
+	}
+
+	return ss.str();
+}
+
+int Kws3::applyConfig(){
 	// Clear existing listeners.
 	for(auto it = m_http_listeners.begin(); it != m_http_listeners.end(); it = m_http_listeners.erase(it))
 		delete *it;
 
 	for(auto kv : m_config.m_ports){
 		// TODO - how does TcpListener know about site configuration?
-		m_http_listeners.push_back(new TcpListener(kv.first));
+		if(kv.second->m_state)
+			m_http_listeners.push_back(new TcpListener(kv.first));
 	}
+
+	// TODO apply all config
+
+	return 0;
 }
 
 bool Kws3::valid() const {
@@ -98,7 +126,26 @@ bool Kws3::run(){
 
 					mss >> verb;
 					if(!!mss){
-						if(verb == "get"){
+						if(verb == "check"){
+							string errors = checkConfig();
+							stringstream ss;
+
+							ss << "check" << endl << errors;
+							bc->write()->tryWrite(ss.str());
+						} else if(verb == "apply"){
+							string errors = checkConfig();
+							stringstream ss;
+
+							if(errors.size()){
+								// Report errors.
+								ss << "check" << endl << errors;
+							} else {
+								// Apply configuration changes.
+								ss << "apply " << applyConfig();
+							}
+
+							bc->write()->tryWrite(ss.str());
+						} else if(verb == "get"){
 							string what;
 
 							mss >> what;
@@ -125,13 +172,11 @@ bool Kws3::run(){
 										}
 
 										cfgss << port
-											<< " state:" << p->m_state;
-
-										if(p->m_siteDefault)
-											cfgss << " siteDefault:" << p->m_siteDefault->m_name;
+											<< " state:" << p->m_state
+											<< " siteDefault:" << p->m_siteDefault;
 
 										for(auto site : p->m_sites)
-											cfgss << " site:" << site->m_name;
+											cfgss << " site:" << site;
 									}
 								} else if(what == "http-site"){
 									// HttpSite objects

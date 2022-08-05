@@ -40,16 +40,15 @@ struct HttpPort {
 	int m_port;
 
 	// Web sites that might be served on this port if the request Host header matches.
-	std::list<HttpSite*> m_sites;
+	std::list<std::string> m_sites;
 
 	// The site to serve if the Host header was not present in the request, or
 	// did not match any configured site.
-	HttpSite *m_siteDefault;
+	std::string m_siteDefault;
 
 	HttpPort(int port) :
 		m_state(true),
-		m_port(port),
-		m_siteDefault(nullptr)
+		m_port(port)
 	{}
 };
 

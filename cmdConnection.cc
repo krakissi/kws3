@@ -62,7 +62,39 @@ bool CmdConnection::receiveMsg(){
 
 			mss >> verb;
 			if(!!mss){
-				if(verb == "http-port"){
+				if(verb == "check"){
+					// Configuration errors that need to be addressed before apply.
+					string errorMsg;
+					int errors = 0;
+
+					while(getline(mss, errorMsg)){
+						errorMsg = chomp(errorMsg);
+
+						if(!errorMsg.empty()){
+							m_pendingMessages.push_front(errorMsg);
+							++ errors;
+						}
+					}
+
+					if(errors)
+						m_pendingMessages.push_back("check: failed config validation.");
+					else m_pendingMessages.push_front("check: ok.");
+				} else if(verb == "apply"){
+					// Result of config apply. We made it past the check phase,
+					// so this should generally be OK.
+					int status;
+
+					mss >> status;
+					if(!!mss){
+						if(!status){
+							// OK
+							m_pendingMessages.push_front("apply: ok.");
+						} else {
+							// Some failure.
+							m_pendingMessages.push_front("apply: failed!");
+						}
+					}
+				} else if(verb == "http-port"){
 					// Receive HTTP listener config information.
 
 					// FIXME debug
@@ -97,8 +129,14 @@ bool CmdConnection::receiveCmd(){
 				// Wait 30ms the first time in case the server gets back quickly, then poll every 250ms.
 				usleep((i == 0) ? 30000 : 250000);
 
-				if(!receiveMsg())
+				if(!receiveMsg()){
+					m_expectingMsg = false;
 					break;
+				}
+			}
+
+			if(m_expectingMsg){
+				m_pendingMessages.push_front(ERR_EXPECTED_MSG_NOT_RECEIVED);
 			}
 
 			m_expectingMsg = false;
@@ -185,7 +223,7 @@ bool CmdConnection::receiveCmd(){
 		cmd = trim(cmd);
 
 		// Commands that work at all levels don't send the crumbs.
-		if((cmd != "top") && (cmd != "end")){
+		if((cmd != "top") && (cmd != "end") && (cmd != "apply") && (cmd != "check")){
 			// For nested configuration elements, insert the path into the command.
 			getCrumbs(css, ' ');
 		}
@@ -311,6 +349,9 @@ void CmdConnection::execConfig(const std::string &cmd){
 			oss << "exiting config mode." << endl;
 		} else if(verb == "top"){
 			clearCrumbs();
+		} else if((verb == "check") || (verb == "apply")){
+			((PipeConnection*) m_pipe->write())->tryWrite(verb);
+			m_expectingMsg = true;
 		} else if(verb == "http-port"){
 			int port;
 

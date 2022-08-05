@@ -29,7 +29,9 @@ class CmdConnection : public Connection {
 
 	bool receiveMsg();
 
-	const std::string ERR_REMOTE_CLOSED = "remote closed signal pipe!";
+	const std::string
+		ERR_REMOTE_CLOSED = "remote closed signal pipe!",
+		ERR_EXPECTED_MSG_NOT_RECEIVED = "timed out waiting for remote response";
 
 public:
 	static struct DebugStats {
