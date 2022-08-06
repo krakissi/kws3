@@ -13,71 +13,74 @@
 #include <string>
 #include <unordered_map>
 
-struct SerialConfig {
-	virtual void load(const std::string &str) = 0;
-	virtual std::string save() const = 0;
-	virtual std::string display() const = 0;
-};
+namespace Cfg {
 
-// A web site.
-struct HttpSite : public SerialConfig {
-	// Enabled/disabled.
-	bool m_state;
+	struct SerialConfig {
+		virtual void load(const std::string &str) = 0;
+		virtual std::string save() const = 0;
+		virtual std::string display() const = 0;
+	};
 
-	// Config model name.
-	std::string m_name;
+	// A web site.
+	struct HttpSite : public SerialConfig {
+		// Enabled/disabled.
+		bool m_state;
 
-	// Hostnames for this site.
-	std::list<std::string> m_hosts;
+		// Config model name.
+		std::string m_name;
 
-	// Document root.
-	std::string m_root;
+		// Hostnames for this site.
+		std::list<std::string> m_hosts;
 
-	HttpSite(const std::string &name) :
-		m_state(true),
-		m_name(name)
-	{}
+		// Document root.
+		std::string m_root;
 
-	virtual void load(const std::string &str) override;
-	virtual std::string save() const override;
-	virtual std::string display() const override;
-};
+		HttpSite(const std::string &name) :
+			m_state(true),
+			m_name(name)
+		{}
 
-// A port receive and respond to HTTP requests.
-struct HttpPort : public SerialConfig {
-	// Enabled/disabled.
-	bool m_state;
+		virtual void load(const std::string &str) override;
+		virtual std::string save() const override;
+		virtual std::string display() const override;
+	};
 
-	// The TCP port to listen on.
-	int m_port;
+	// A port receive and respond to HTTP requests.
+	struct HttpPort : public SerialConfig {
+		// Enabled/disabled.
+		bool m_state;
 
-	// Web sites that might be served on this port if the request Host header matches.
-	std::list<std::string> m_sites;
+		// The TCP port to listen on.
+		int m_port;
 
-	// The site to serve if the Host header was not present in the request, or
-	// did not match any configured site.
-	std::string m_siteDefault;
+		// Web sites that might be served on this port if the request Host header matches.
+		std::list<std::string> m_sites;
 
-	HttpPort(int port) :
-		m_state(true),
-		m_port(port)
-	{}
+		// The site to serve if the Host header was not present in the request, or
+		// did not match any configured site.
+		std::string m_siteDefault;
 
-	virtual void load(const std::string &str) override;
-	virtual std::string save() const override;
-	virtual std::string display() const override;
-};
+		HttpPort(int port) :
+			m_state(true),
+			m_port(port)
+		{}
 
-struct Kws3Config {
-	std::unordered_map<std::string, HttpSite*> m_sites;
-	std::unordered_map<int, HttpPort*> m_ports;
+		virtual void load(const std::string &str) override;
+		virtual std::string save() const override;
+		virtual std::string display() const override;
+	};
 
-	template<class T, class U>
-	inline static void ClearMap(std::unordered_map<T, U> &m){
-		for(auto it = m.begin(); it != m.end(); it = m.erase(it))
-			delete it->second;
-	}
-};
+	struct Kws3 {
+		std::unordered_map<std::string, HttpSite*> m_sites;
+		std::unordered_map<int, HttpPort*> m_ports;
 
+		template<class T, class U>
+		inline static void ClearMap(std::unordered_map<T, U> &m){
+			for(auto it = m.begin(); it != m.end(); it = m.erase(it))
+				delete it->second;
+		}
+	};
+
+}
 #endif
 

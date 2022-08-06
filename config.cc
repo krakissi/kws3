@@ -9,7 +9,7 @@
 
 using namespace std;
 
-void HttpSite::load(const string &str){
+void Cfg::HttpSite::load(const string &str){
 	stringstream ss(str);
 	string kv;
 
@@ -32,7 +32,7 @@ void HttpSite::load(const string &str){
 	}
 }
 
-string HttpSite::save() const {
+string Cfg::HttpSite::save() const {
 	stringstream ss;
 
 	ss << m_name
@@ -45,7 +45,7 @@ string HttpSite::save() const {
 	return ss.str();
 }
 
-string HttpSite::display() const {
+string Cfg::HttpSite::display() const {
 	stringstream ss;
 
 	ss << "site[" << m_name << "] state[" << (m_state ? "enabled" : "disabled") << "]" << endl
@@ -57,7 +57,7 @@ string HttpSite::display() const {
 	return ss.str();
 }
 
-void HttpPort::load(const string &str){
+void Cfg::HttpPort::load(const string &str){
 	stringstream ss(str);
 	string kv;
 
@@ -80,7 +80,7 @@ void HttpPort::load(const string &str){
 	}
 }
 
-string HttpPort::save() const {
+string Cfg::HttpPort::save() const {
 	stringstream ss;
 
 	ss << m_port
@@ -93,7 +93,7 @@ string HttpPort::save() const {
 	return ss.str();
 }
 
-string HttpPort::display() const {
+string Cfg::HttpPort::display() const {
 	stringstream ss;
 
 	ss << "port[" << m_port << "] state[" << (m_state ? "enabled" : "disabled") << "]" << endl

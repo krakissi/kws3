@@ -96,7 +96,7 @@ bool CmdConnection::receiveMsg(){
 					}
 				} else if(verb == "http-port"){
 					// Remove existing cached data.
-					Kws3Config::ClearMap(m_configCache.m_ports);
+					Cfg::Kws3::ClearMap(m_configCache.m_ports);
 
 					string type;
 
@@ -106,7 +106,7 @@ bool CmdConnection::receiveMsg(){
 
 							if(!!(mss >> port)){
 								// One port with all of its configuration.
-								HttpPort *p = m_configCache.m_ports[port] = new HttpPort(port);
+								Cfg::HttpPort *p = m_configCache.m_ports[port] = new Cfg::HttpPort(port);
 								string rest;
 
 								if(!!getline(mss, rest))
@@ -118,13 +118,13 @@ bool CmdConnection::receiveMsg(){
 								int port = 0;
 
 								if(!!(mss >> port))
-									m_configCache.m_ports[port] = new HttpPort(port);
+									m_configCache.m_ports[port] = new Cfg::HttpPort(port);
 							}
 						}
 					}
 				} else if(verb == "http-site"){
 					// Remove existing cached data.
-					Kws3Config::ClearMap(m_configCache.m_sites);
+					Cfg::Kws3::ClearMap(m_configCache.m_sites);
 
 					string type;
 
@@ -134,7 +134,7 @@ bool CmdConnection::receiveMsg(){
 
 							if(!!(mss >> name)){
 								// One site with all of its configuration.
-								HttpSite *s = m_configCache.m_sites[name] = new HttpSite(name);
+								Cfg::HttpSite *s = m_configCache.m_sites[name] = new Cfg::HttpSite(name);
 								string rest;
 
 								if(!!getline(mss, rest))
@@ -146,7 +146,7 @@ bool CmdConnection::receiveMsg(){
 								string name;
 
 								if(!!(mss >> name))
-									m_configCache.m_sites[name] = new HttpSite(name);
+									m_configCache.m_sites[name] = new Cfg::HttpSite(name);
 							}
 						}
 					}

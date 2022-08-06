@@ -18,8 +18,8 @@ using namespace std;
 void Kws3::init(){
 	// Example configuration.
 	{
-		HttpSite *s = new HttpSite("default");
-		HttpPort *p = new HttpPort(9004);
+		Cfg::HttpSite *s = new Cfg::HttpSite("default");
+		Cfg::HttpPort *p = new Cfg::HttpPort(9004);
 
 		m_config.m_sites[s->m_name] = s;
 		m_config.m_ports[p->m_port] = p;
@@ -53,7 +53,7 @@ string Kws3::checkConfig(){
 
 	for(auto kv : m_config.m_ports){
 		const string prefix = (string("http-port ") + to_string(kv.first) + ": ");
-		HttpPort *p = kv.second;
+		Cfg::HttpPort *p = kv.second;
 
 		if((kv.first > 0xffff) || (kv.first <= 0))
 			ss << prefix << "invalid port number" << endl;
@@ -66,7 +66,7 @@ string Kws3::checkConfig(){
 				bool anySiteEnabled = false;
 
 				if(!p->m_siteDefault.empty()){
-					HttpSite *s = nullptr;
+					Cfg::HttpSite *s = nullptr;
 
 					try {
 						s = m_config.m_sites.at(p->m_siteDefault);
@@ -77,7 +77,7 @@ string Kws3::checkConfig(){
 				}
 
 				for(string site : p->m_sites){
-					HttpSite *s = nullptr;
+					Cfg::HttpSite *s = nullptr;
 
 					try {
 						s = m_config.m_sites.at(site);
@@ -190,12 +190,12 @@ bool Kws3::run(){
 										for(auto kv : m_config.m_ports)
 											cfgss << kv.first << " ";
 									} else {
-										HttpPort *p;
+										Cfg::HttpPort *p;
 
 										try {
 											p = m_config.m_ports.at(port);
 										} catch(...){
-											m_config.m_ports[port] = p = new HttpPort(port);
+											m_config.m_ports[port] = p = new Cfg::HttpPort(port);
 										}
 
 										cfgss << "item " << p->save();
@@ -213,12 +213,12 @@ bool Kws3::run(){
 										for(auto kv : m_config.m_sites)
 											cfgss << kv.first << " ";
 									} else {
-										HttpSite *s;
+										Cfg::HttpSite *s;
 
 										try {
 											s = m_config.m_sites.at(name);
 										} catch(...){
-											m_config.m_sites[name] = s = new HttpSite(name);
+											m_config.m_sites[name] = s = new Cfg::HttpSite(name);
 										}
 
 										cfgss << "item " << s->save();

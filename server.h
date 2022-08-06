@@ -21,7 +21,7 @@ class Kws3 {
 	// This should probably be a map of port:listener*
 	std::list<TcpListener*> m_http_listeners;
 
-	Kws3Config m_config;
+	Cfg::Kws3 m_config;
 
 	int m_acceptPassCount;
 

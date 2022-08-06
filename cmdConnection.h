@@ -21,7 +21,7 @@ class CmdConnection : public Connection {
 	std::string m_lastCmd;
 	std::list<std::string> m_pendingMessages;
 
-	Kws3Config m_configCache;
+	Cfg::Kws3 m_configCache;
 
 	bool m_configMode;
 	bool m_expectingMsg;
