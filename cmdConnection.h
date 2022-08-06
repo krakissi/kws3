@@ -11,12 +11,17 @@
 #include <list>
 #include <vector>
 
+#include "config.h"
+
+
 class CmdConnection : public Connection {
 	BiConn *m_pipe;
 
 	std::vector<std::string> m_configPath;
 	std::string m_lastCmd;
 	std::list<std::string> m_pendingMessages;
+
+	Kws3Config m_configCache;
 
 	bool m_configMode;
 	bool m_expectingMsg;

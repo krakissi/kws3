@@ -95,15 +95,61 @@ bool CmdConnection::receiveMsg(){
 						}
 					}
 				} else if(verb == "http-port"){
-					// Receive HTTP listener config information.
+					// Remove existing cached data.
+					Kws3Config::ClearMap(m_configCache.m_ports);
 
-					// FIXME debug
-					m_pendingMessages.push_front(msg.substr(msg.find("http-port") + string("http-port").size() + 1));
+					string type;
+
+					if(!!(mss >> type)){
+						if(type == "item"){
+							int port;
+
+							if(!!(mss >> port)){
+								// One port with all of its configuration.
+								HttpPort *p = m_configCache.m_ports[port] = new HttpPort(port);
+								string rest;
+
+								if(!!getline(mss, rest))
+									p->load(rest);
+							}
+						} else if (type == "list"){
+							// List of configured ports.
+							while(!!mss){
+								int port = 0;
+
+								if(!!(mss >> port))
+									m_configCache.m_ports[port] = new HttpPort(port);
+							}
+						}
+					}
 				} else if(verb == "http-site"){
-					// Receive site config
+					// Remove existing cached data.
+					Kws3Config::ClearMap(m_configCache.m_sites);
 
-					// FIXME debug
-					m_pendingMessages.push_front(msg.substr(msg.find("http-site") + string("http-site").size() + 1));
+					string type;
+
+					if(!!(mss >> type)){
+						if(type == "item"){
+							string name;
+
+							if(!!(mss >> name)){
+								// One site with all of its configuration.
+								HttpSite *s = m_configCache.m_sites[name] = new HttpSite(name);
+								string rest;
+
+								if(!!getline(mss, rest))
+									s->load(rest);
+							}
+						} else if (type == "list"){
+							// List of configured ports.
+							while(!!mss){
+								string name;
+
+								if(!!(mss >> name))
+									m_configCache.m_sites[name] = new HttpSite(name);
+							}
+						}
+					}
 				}
 			}
 		}
@@ -373,6 +419,17 @@ void CmdConnection::execConfig(const std::string &cmd){
 					((PipeConnection*) m_pipe->write())->tryWrite(pss.str());
 					m_expectingMsg = true;
 				}
+
+				string item;
+				if(!!(sss >> item)){
+					if(item == "show"){
+						try {
+							oss << m_configCache.m_ports.at(port)->display();
+						} catch(...){
+							// Retry...
+						}
+					}
+				}
 			}
 		} else if(verb == "http-site"){
 			string name;
@@ -394,6 +451,17 @@ void CmdConnection::execConfig(const std::string &cmd){
 					pss << "get http-site " << name;
 					((PipeConnection*) m_pipe->write())->tryWrite(pss.str());
 					m_expectingMsg = true;
+				}
+
+				string item;
+				if(!!(sss >> item)){
+					if(item == "show"){
+						try {
+							oss << m_configCache.m_sites.at(name)->display();
+						} catch(...){
+							// Retry...
+						}
+					}
 				}
 			}
 		} else {

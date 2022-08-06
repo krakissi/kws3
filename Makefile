@@ -23,6 +23,11 @@ ${OUTDIR}/util.o:                      \
 		util.cc
 	${GCC} -o ${OUTDIR}/util.o -c util.cc
 
+${OUTDIR}/config.o:                    \
+        config.h                       \
+		config.cc
+	${GCC} -o ${OUTDIR}/config.o -c config.cc
+
 ${OUTDIR}/connection.o:                \
 		connection.h                   \
 		connection.cc
@@ -60,6 +65,7 @@ ${OUTDIR}/cmdConnection.o:             \
 		cmdConnection.h                \
 		cmdConnection.cc               \
 		shmemStat.h                    \
+		${OUTDIR}/config.o             \
 		${OUTDIR}/util.o               \
 		${OUTDIR}/httpConnection.o     \
 		${OUTDIR}/pipeConnection.o     \
@@ -69,7 +75,7 @@ ${OUTDIR}/cmdConnection.o:             \
 ${OUTDIR}/server.o:                    \
 		server.h                       \
 		server.cc                      \
-		httpModel.h                    \
+		${OUTDIR}/config.o             \
 		${OUTDIR}/tcpListener.o        \
 		${OUTDIR}/httpConnection.o     \
 		${OUTDIR}/cmdConnection.o      \

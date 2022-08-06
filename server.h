@@ -11,7 +11,7 @@
 
 #include "tcpListener.h"
 #include "pipeConnection.h"
-#include "httpModel.h"
+#include "config.h"
 
 
 class Kws3 {
@@ -21,10 +21,7 @@ class Kws3 {
 	// This should probably be a map of port:listener*
 	std::list<TcpListener*> m_http_listeners;
 
-	struct Config {
-		std::unordered_map<std::string, HttpSite*> m_sites;
-		std::unordered_map<int, HttpPort*> m_ports;
-	} m_config;
+	Kws3Config m_config;
 
 	int m_acceptPassCount;
 

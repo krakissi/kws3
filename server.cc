@@ -184,6 +184,8 @@ bool Kws3::run(){
 									int port;
 									mss >> port;
 									if(!mss){
+										cfgss << "list ";
+
 										// No port number specified, return a list of listening ports.
 										for(auto kv : m_config.m_ports)
 											cfgss << kv.first << " ";
@@ -196,12 +198,7 @@ bool Kws3::run(){
 											m_config.m_ports[port] = p = new HttpPort(port);
 										}
 
-										cfgss << port
-											<< " state:" << p->m_state
-											<< " siteDefault:" << p->m_siteDefault;
-
-										for(auto site : p->m_sites)
-											cfgss << " site:" << site;
+										cfgss << "item " << p->save();
 									}
 								} else if(what == "http-site"){
 									// HttpSite objects
@@ -210,6 +207,8 @@ bool Kws3::run(){
 									string name;
 									mss >> name;
 									if(!mss){
+										cfgss << "list ";
+
 										// No site name specified, return a list of site names.
 										for(auto kv : m_config.m_sites)
 											cfgss << kv.first << " ";
@@ -222,12 +221,7 @@ bool Kws3::run(){
 											m_config.m_sites[name] = s = new HttpSite(name);
 										}
 
-										cfgss << name
-											<< " state:" << s->m_state
-											<< " root:" << s->m_root;
-
-										for(string host : s->m_hosts)
-											cfgss << " host:" << host;
+										cfgss << "item " << s->save();
 									}
 								}
 
