@@ -59,6 +59,9 @@ namespace Cfg {
 		// Enabled/disabled.
 		bool m_state;
 
+		// If true, bind only 127.0.0.1. Otherwise bind all interfaces.
+		bool m_local;
+
 		// The TCP port to listen on.
 		int m_port;
 
@@ -71,6 +74,7 @@ namespace Cfg {
 
 		HttpPort(int port) :
 			m_state(true),
+			m_local(true),
 			m_port(port)
 		{}
 

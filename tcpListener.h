@@ -17,11 +17,11 @@ class TcpListener : public Connection {
 	void cleanup();
 
 public:
-	TcpListener(int port) :
+	TcpListener(int port, bool local) :
 		m_addr({
 			.sin_family = AF_INET,
 			.sin_port = htons(port),
-			.sin_addr = { .s_addr = htonl(INADDR_ANY) }
+			.sin_addr = { .s_addr = (local ? inet_addr("127.0.0.1") : htonl(INADDR_ANY))}
 		}),
 		m_error(0)
 	{

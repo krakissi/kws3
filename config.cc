@@ -108,6 +108,8 @@ void Cfg::HttpPort::load(const string &str){
 				m_siteDefault = v;
 			else if(k == "site")
 				m_sites.push_back(v);
+			else if(k == "local")
+				m_local = stoi(v);
 		}
 	}
 }
@@ -117,7 +119,8 @@ string Cfg::HttpPort::save() const {
 
 	ss << m_port
 		<< " state:" << m_state
-		<< " siteDefault:" << m_siteDefault;
+		<< " siteDefault:" << m_siteDefault
+		<< " local:" << m_local;
 
 	for(auto site : m_sites)
 		ss << " site:" << site;
@@ -130,6 +133,7 @@ string Cfg::HttpPort::display() const {
 
 	ss << "http-port " << m_port << endl
 		<< setw(LABEL_WIDTH) << "state: " << (m_state ? "enabled" : "disabled") << endl
+		<< setw(LABEL_WIDTH) << "local: " << (m_local ? "yes" : "no") << endl
 		<< setw(LABEL_WIDTH) << "site-default: " << (m_siteDefault.empty() ? "(not set)" : m_siteDefault.c_str()) << endl;
 
 	for(const string &s : m_sites)

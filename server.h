@@ -34,7 +34,7 @@ class Kws3 {
 public:
 
 	Kws3() :
-		m_cmd_listener(9003),
+		m_cmd_listener(9003, true),
 		m_acceptPassCount(0)
 	{
 		init();

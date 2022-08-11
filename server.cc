@@ -104,7 +104,7 @@ int Kws3::applyConfig(){
 	for(auto kv : m_config.m_ports){
 		// TODO - how does TcpListener know about site configuration?
 		if(kv.second->m_state)
-			m_http_listeners.push_back(new TcpListener(kv.first));
+			m_http_listeners.push_back(new TcpListener(kv.first, kv.second->m_local));
 	}
 
 	// TODO apply all config
