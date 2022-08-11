@@ -3,9 +3,12 @@
 	mperron (2022)
 */
 
+#define LABEL_WIDTH 14
+
 #include "config.h"
 
 #include <sstream>
+#include <iomanip>
 
 using namespace std;
 
@@ -76,11 +79,12 @@ string Cfg::HttpSite::save() const {
 string Cfg::HttpSite::display() const {
 	stringstream ss;
 
-	ss << "site[" << m_name << "] state[" << (m_state ? "enabled" : "disabled") << "]" << endl
-		<< "  root: " << m_root << endl;
+	ss << "http-site " << m_name << endl
+		<< setw(LABEL_WIDTH) << "state: " << (m_state ? "enabled" : "disabled") << endl
+		<< setw(LABEL_WIDTH) << "root: " << (m_root.empty() ? "(not set)" : m_root.c_str()) << endl;
 
 	for(const string &s : m_hosts)
-		ss << "  host: " << s << endl;
+		ss << setw(LABEL_WIDTH) << "  host: " << s << endl;
 
 	return ss.str();
 }
@@ -124,11 +128,12 @@ string Cfg::HttpPort::save() const {
 string Cfg::HttpPort::display() const {
 	stringstream ss;
 
-	ss << "port[" << m_port << "] state[" << (m_state ? "enabled" : "disabled") << "]" << endl
-		<< "  site-default: " << (m_siteDefault.empty() ? "(not set)" : m_siteDefault.c_str()) << endl;
+	ss << "http-port " << m_port << endl
+		<< setw(LABEL_WIDTH) << "state: " << (m_state ? "enabled" : "disabled") << endl
+		<< setw(LABEL_WIDTH) << "site-default: " << (m_siteDefault.empty() ? "(not set)" : m_siteDefault.c_str()) << endl;
 
 	for(const string &s : m_sites)
-		ss << "  site: " << s << endl;
+		ss << setw(LABEL_WIDTH) << "site: " << s << endl;
 
 	return ss.str();
 }
