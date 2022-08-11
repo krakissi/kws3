@@ -9,6 +9,34 @@
 
 using namespace std;
 
+void Cfg::ObjList::load(const string &str){
+	stringstream ss(str);
+	string item;
+
+	m_items.clear();
+
+	while(!!(ss >> item))
+		m_items.push_back(item);
+}
+
+string Cfg::ObjList::save() const {
+	stringstream ss;
+
+	for(const auto &item : m_items)
+		ss << item << " ";
+
+	return ss.str();
+}
+
+string Cfg::ObjList::display() const {
+	stringstream ss;
+
+	ss << save() << endl;
+
+	return ss.str();
+}
+
+
 void Cfg::HttpSite::load(const string &str){
 	stringstream ss(str);
 	string kv;

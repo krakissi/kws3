@@ -44,6 +44,8 @@ void CmdConnection::getCrumbs(stringstream &ss, const char sep){
 }
 
 bool CmdConnection::receiveMsg(){
+	static Cfg::ObjList defaultObjList;
+
 	if(!m_pipe)
 		return false;
 
@@ -116,12 +118,11 @@ bool CmdConnection::receiveMsg(){
 							}
 						} else if (type == "list"){
 							// List of configured ports.
-							while(!!mss){
-								int port = 0;
+							string line;
+							getline(mss, line);
 
-								if(!!(mss >> port))
-									m_configCache.m_ports[port] = new Cfg::HttpPort(port);
-							}
+							defaultObjList.load(line);
+							m_lastRcvdConfigObj = &defaultObjList;
 						}
 					}
 				} else if(verb == "http-site"){
@@ -146,12 +147,11 @@ bool CmdConnection::receiveMsg(){
 							}
 						} else if (type == "list"){
 							// List of configured ports.
-							while(!!mss){
-								string name;
+							string line;
+							getline(mss, line);
 
-								if(!!(mss >> name))
-									m_configCache.m_sites[name] = new Cfg::HttpSite(name);
-							}
+							defaultObjList.load(line);
+							m_lastRcvdConfigObj = &defaultObjList;
 						}
 					}
 				}
@@ -423,34 +423,32 @@ void CmdConnection::execConfig(const std::string &cmd){
 				oss << "show: what?" << endl;
 			} else {
 				Cfg::SerialConfig *obj = nullptr;
-				string which;
 
-				sss >> which;
-				if(!sss){
-					// TODO - show a list of all "what"s
+				m_lastRcvdConfigObj = nullptr;
+				m_expectingMsg = true;
 
-					// FIXME debug
-					oss << "show: list" << endl;
+				stringstream pss;
+				pss << "get " << what;
+
+				// Was a specific item specified?
+				{
+					string which;
+
+					sss >> which;
+					if(!!sss)
+						pss << " " << which;
+				}
+
+				// Request and wait for data.
+				((PipeConnection*) m_pipe->write())->tryWrite(pss.str());
+				waitForMsg();
+
+				// m_lastRcvdConfigObj will be set by waitForMsg() if a response comes from the server.
+				if(m_lastRcvdConfigObj){
+					// Received a config object.
+					oss << m_lastRcvdConfigObj->display();
 				} else {
-					m_lastRcvdConfigObj = nullptr;
-					m_expectingMsg = true;
-
-					{
-						stringstream pss;
-
-						pss << "get " << what << " " << which;
-						((PipeConnection*) m_pipe->write())->tryWrite(pss.str());
-					}
-
-					waitForMsg();
-
-					// m_lastRcvdConfigObj will be set by waitForMsg() if a response comes from the server.
-					if(m_lastRcvdConfigObj){
-						// Received a config object.
-						oss << "Received:" << endl << m_lastRcvdConfigObj->display() << endl;
-					} else {
-						m_pendingMessages.push_front(ERR_EXPECTED_MSG_NOT_RECEIVED);
-					}
+					m_pendingMessages.push_front(ERR_EXPECTED_MSG_NOT_RECEIVED);
 				}
 			}
 		} else if(verb == "http-port"){

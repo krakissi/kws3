@@ -21,6 +21,15 @@ namespace Cfg {
 		virtual std::string display() const = 0;
 	};
 
+	// A list of identifiers of config objects.
+	struct ObjList : public SerialConfig {
+		std::list<std::string> m_items;
+
+		virtual void load(const std::string &str) override;
+		virtual std::string save() const override;
+		virtual std::string display() const override;
+	};
+
 	// A web site.
 	struct HttpSite : public SerialConfig {
 		// Enabled/disabled.
