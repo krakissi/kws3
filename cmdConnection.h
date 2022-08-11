@@ -22,6 +22,7 @@ class CmdConnection : public Connection {
 	std::list<std::string> m_pendingMessages;
 
 	Cfg::Kws3 m_configCache;
+	Cfg::SerialConfig *m_lastRcvdConfigObj;
 
 	bool m_configMode;
 	bool m_expectingMsg;
@@ -32,6 +33,7 @@ class CmdConnection : public Connection {
 	void execCommand(const std::string &cmd);
 	void execConfig(const std::string &cmd);
 
+	void waitForMsg();
 	bool receiveMsg();
 
 	const std::string
@@ -56,6 +58,7 @@ public:
 	CmdConnection() :
 		m_pipe(nullptr),
 		m_configPath(10 /* Hopefully no more than 10 nested levels of config */),
+		m_lastRcvdConfigObj(nullptr),
 		m_configMode(false),
 		m_expectingMsg(false)
 	{

@@ -109,8 +109,10 @@ bool CmdConnection::receiveMsg(){
 								Cfg::HttpPort *p = m_configCache.m_ports[port] = new Cfg::HttpPort(port);
 								string rest;
 
-								if(!!getline(mss, rest))
+								if(!!getline(mss, rest)){
 									p->load(rest);
+									m_lastRcvdConfigObj = p;
+								}
 							}
 						} else if (type == "list"){
 							// List of configured ports.
@@ -137,8 +139,10 @@ bool CmdConnection::receiveMsg(){
 								Cfg::HttpSite *s = m_configCache.m_sites[name] = new Cfg::HttpSite(name);
 								string rest;
 
-								if(!!getline(mss, rest))
+								if(!!getline(mss, rest)){
 									s->load(rest);
+									m_lastRcvdConfigObj = s;
+								}
 							}
 						} else if (type == "list"){
 							// List of configured ports.
@@ -162,6 +166,27 @@ bool CmdConnection::receiveMsg(){
 	return true;
 }
 
+void CmdConnection::waitForMsg(){
+	// A command was issued which should get a response, wait a while and
+	// see if it does.
+	for(int i = 0; i < 13; ++ i){
+		// 12 * 250000 = 3000000 us = 3 seconds timeout
+		// Wait 30ms the first time in case the server gets back quickly, then poll every 250ms.
+		usleep((i == 0) ? 30000 : 250000);
+
+		if(!receiveMsg()){
+			m_expectingMsg = false;
+			break;
+		}
+	}
+
+	if(m_expectingMsg){
+		m_pendingMessages.push_front(ERR_EXPECTED_MSG_NOT_RECEIVED);
+	}
+
+	m_expectingMsg = false;
+}
+
 bool CmdConnection::receiveCmd(){
 	if(!valid())
 		return false;
@@ -169,24 +194,9 @@ bool CmdConnection::receiveCmd(){
 	if(m_pipe){
 		// A command was issued which should get a response, wait a while and
 		// see if it does.
-		if(m_expectingMsg){
-			for(int i = 0; i < 13; ++ i){
-				// 12 * 250000 = 3000000 us = 3 seconds timeout
-				// Wait 30ms the first time in case the server gets back quickly, then poll every 250ms.
-				usleep((i == 0) ? 30000 : 250000);
+		if(m_expectingMsg)
+			waitForMsg();
 
-				if(!receiveMsg()){
-					m_expectingMsg = false;
-					break;
-				}
-			}
-
-			if(m_expectingMsg){
-				m_pendingMessages.push_front(ERR_EXPECTED_MSG_NOT_RECEIVED);
-			}
-
-			m_expectingMsg = false;
-		}
 	} else {
 		// Cannot configure if pipe to the main task it broken.
 		if(m_configMode){
@@ -268,13 +278,20 @@ bool CmdConnection::receiveCmd(){
 
 		cmd = trim(cmd);
 
-		// Commands that work at all levels don't send the crumbs.
-		if((cmd != "top") && (cmd != "end") && (cmd != "apply") && (cmd != "check")){
-			// For nested configuration elements, insert the path into the command.
+		if(cmd == "show"){
+			// If the command is show, prepend it instead.
+			css << cmd << " ";
 			getCrumbs(css, ' ');
+		} else {
+			// Commands that work at all levels don't send the crumbs.
+			if((cmd != "top") && (cmd != "end") && (cmd != "apply") && (cmd != "check")){
+				// For nested configuration elements, insert the path into the command.
+				getCrumbs(css, ' ');
+			}
+
+			css << cmd;
 		}
 
-		css << cmd;
 		execConfig(css.str());
 	} else execCommand(cmd);
 
@@ -337,7 +354,7 @@ void CmdConnection::execCommand(const string &cmd){
 
 			if(!sss){
 				oss << "show what?" << endl;
-				oss << "  try : stats" << endl;
+				oss << "  try: stats" << endl;
 			} else {
 				if(what == "stats"){
 					string table;
@@ -398,6 +415,44 @@ void CmdConnection::execConfig(const std::string &cmd){
 		} else if((verb == "check") || (verb == "apply")){
 			((PipeConnection*) m_pipe->write())->tryWrite(verb);
 			m_expectingMsg = true;
+		} else if(verb == "show"){
+			string what;
+
+			sss >> what;
+			if(!sss){
+				oss << "show: what?" << endl;
+			} else {
+				Cfg::SerialConfig *obj = nullptr;
+				string which;
+
+				sss >> which;
+				if(!sss){
+					// TODO - show a list of all "what"s
+
+					// FIXME debug
+					oss << "show: list" << endl;
+				} else {
+					m_lastRcvdConfigObj = nullptr;
+					m_expectingMsg = true;
+
+					{
+						stringstream pss;
+
+						pss << "get " << what << " " << which;
+						((PipeConnection*) m_pipe->write())->tryWrite(pss.str());
+					}
+
+					waitForMsg();
+
+					// m_lastRcvdConfigObj will be set by waitForMsg() if a response comes from the server.
+					if(m_lastRcvdConfigObj){
+						// Received a config object.
+						oss << "Received:" << endl << m_lastRcvdConfigObj->display() << endl;
+					} else {
+						m_pendingMessages.push_front(ERR_EXPECTED_MSG_NOT_RECEIVED);
+					}
+				}
+			}
 		} else if(verb == "http-port"){
 			int port;
 
@@ -418,17 +473,6 @@ void CmdConnection::execConfig(const std::string &cmd){
 					pss << "get http-port " << port;
 					((PipeConnection*) m_pipe->write())->tryWrite(pss.str());
 					m_expectingMsg = true;
-				}
-
-				string item;
-				if(!!(sss >> item)){
-					if(item == "show"){
-						try {
-							oss << m_configCache.m_ports.at(port)->display();
-						} catch(...){
-							// Retry...
-						}
-					}
 				}
 			}
 		} else if(verb == "http-site"){
@@ -451,17 +495,6 @@ void CmdConnection::execConfig(const std::string &cmd){
 					pss << "get http-site " << name;
 					((PipeConnection*) m_pipe->write())->tryWrite(pss.str());
 					m_expectingMsg = true;
-				}
-
-				string item;
-				if(!!(sss >> item)){
-					if(item == "show"){
-						try {
-							oss << m_configCache.m_sites.at(name)->display();
-						} catch(...){
-							// Retry...
-						}
-					}
 				}
 			}
 		} else {
