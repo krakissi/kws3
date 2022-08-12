@@ -78,9 +78,13 @@ bool CmdConnection::receiveMsg(){
 						}
 					}
 
-					if(errors)
+					if(errors){
 						m_pendingMessages.push_back("check: failed config validation.");
-					else m_pendingMessages.push_front("check: ok.");
+						++ s_debugStats->m_configCheckFailure;
+					} else {
+						m_pendingMessages.push_front("check: ok.");
+						++ s_debugStats->m_configCheckSuccess;
+					}
 				} else if(verb == "apply"){
 					// Result of config apply. We made it past the check phase,
 					// so this should generally be OK.
@@ -91,9 +95,11 @@ bool CmdConnection::receiveMsg(){
 						if(!status){
 							// OK
 							m_pendingMessages.push_front("apply: ok.");
+							++ s_debugStats->m_configApplySuccess;
 						} else {
 							// Some failure.
 							m_pendingMessages.push_front("apply: failed!");
+							++ s_debugStats->m_configApplyFailure;
 						}
 					}
 				} else if(verb == "http-port"){
@@ -283,6 +289,20 @@ bool CmdConnection::receiveCmd(){
 			css << cmd << " ";
 			getCrumbs(css, ' ');
 		} else {
+			if(cmd == "up"){
+				if(!m_configPath[0].empty()){
+					// Move up a level in config.
+					for(int i = 1; i <= m_configPath.size(); ++ i){
+						if((i == m_configPath.size()) || (m_configPath[i].empty())){
+							m_configPath[i - 1] = "";
+							break;
+						}
+					}
+				}
+
+				cmd = "";
+			}
+
 			// Commands that work at all levels don't send the crumbs.
 			if((cmd != "top") && (cmd != "end") && (cmd != "apply") && (cmd != "check")){
 				// For nested configuration elements, insert the path into the command.
@@ -292,16 +312,18 @@ bool CmdConnection::receiveCmd(){
 			css << cmd;
 		}
 
-		execConfig(css.str());
-	} else execCommand(cmd);
+		++ s_debugStats->m_configReceived;
+		execConfig(trim(css.str()));
+	} else {
+		++ s_debugStats->m_cmdReceived;
+		execCommand(trim(cmd));
+	}
 
 	// True to continue processing commands.
 	return true;
 }
 
 void CmdConnection::execCommand(const string &cmd){
-	++ s_debugStats->m_cmdReceived;
-
 	// Parse command string. It should start with some verb.
 	stringstream sss(cmd), oss;
 	string verb;
@@ -381,6 +403,7 @@ void CmdConnection::execCommand(const string &cmd){
 		} else if(verb == "config"){
 			// Enter config mode.
 			m_configMode = true;
+			++ s_debugStats->m_configStart;
 
 			oss << "entering config mode (\"end\" to exit)..." << endl;
 		} else {
@@ -444,24 +467,17 @@ void CmdConnection::execConfig(const std::string &cmd){
 				waitForMsg();
 
 				// m_lastRcvdConfigObj will be set by waitForMsg() if a response comes from the server.
-				if(m_lastRcvdConfigObj){
-					// Received a config object.
+				if(m_lastRcvdConfigObj)
 					oss << m_lastRcvdConfigObj->display();
-				} else {
-					m_pendingMessages.push_front(ERR_EXPECTED_MSG_NOT_RECEIVED);
-				}
 			}
 		} else if(verb == "http-port"){
+			m_configPath[configLevel++] = verb;
+
 			int port;
 
 			sss >> port;
-			if(!sss){
-				// Get all configured port numbers.
-				((PipeConnection*) m_pipe->write())->tryWrite("get http-port");
-				m_expectingMsg = true;
-			} else {
+			if(!!sss){
 				// Store breadcrumbs.
-				m_configPath[configLevel++] = verb;
 				m_configPath[configLevel++] = to_string(port);
 
 				// Get config for this port.
@@ -474,16 +490,13 @@ void CmdConnection::execConfig(const std::string &cmd){
 				}
 			}
 		} else if(verb == "http-site"){
+			m_configPath[configLevel++] = verb;
+
 			string name;
 
 			sss >> name;
-			if(!sss){
-				// Get all configured site numbers.
-				((PipeConnection*) m_pipe->write())->tryWrite("get http-site");
-				m_expectingMsg = true;
-			} else {
+			if(!!sss){
 				// Store breadcrumbs.
-				m_configPath[configLevel++] = verb;
 				m_configPath[configLevel++] = name;
 
 				// Get config for this site.
@@ -506,12 +519,19 @@ void CmdConnection::execConfig(const std::string &cmd){
 
 void CmdConnection::DumpDebugStats(stringstream &ss){
 	ss << "+ CmdConnection DebugStats" << endl
-		<< "|   m_cmdReceived: " << s_debugStats->m_cmdReceived << endl
+		<< "|        m_cmdReceived: " << s_debugStats->m_cmdReceived << endl
 		<< "|" << endl
-		<< "|   m_pipesActive: " << s_debugStats->m_pipesActive << endl
-		<< "|  m_pipesTimeout: " << s_debugStats->m_pipesTimeout << endl
-		<< "| m_pipesPingSent: " << s_debugStats->m_pipesPingSent << endl
-		<< "| m_pipesPingRcvd: " << s_debugStats->m_pipesPingRcvd << endl
+		<< "|        m_pipesActive: " << s_debugStats->m_pipesActive << endl
+		<< "|       m_pipesTimeout: " << s_debugStats->m_pipesTimeout << endl
+		<< "|      m_pipesPingSent: " << s_debugStats->m_pipesPingSent << endl
+		<< "|      m_pipesPingRcvd: " << s_debugStats->m_pipesPingRcvd << endl
+		<< "|" << endl
+		<< "|        m_configStart: " << s_debugStats->m_configStart << endl
+		<< "|     m_configReceived: " << s_debugStats->m_configReceived << endl
+		<< "| m_configCheckSuccess: " << s_debugStats->m_configCheckSuccess << endl
+		<< "| m_configCheckFailure: " << s_debugStats->m_configCheckFailure << endl
+		<< "| m_configApplySuccess: " << s_debugStats->m_configApplySuccess << endl
+		<< "| m_configApplyFailure: " << s_debugStats->m_configApplyFailure << endl
 		<< "+" << endl;
 }
 KWS3_SHMEM_STAT_INIT   (CmdConnection)

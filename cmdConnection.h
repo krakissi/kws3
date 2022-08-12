@@ -50,6 +50,13 @@ public:
 			m_pipesPingSent,
 			m_pipesPingRcvd,
 
+			m_configStart,
+			m_configReceived,
+			m_configCheckSuccess,
+			m_configCheckFailure,
+			m_configApplySuccess,
+			m_configApplyFailure,
+
 			m_lastone;
 
 	} *s_debugStats;
